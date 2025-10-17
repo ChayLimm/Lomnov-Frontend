@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // Primary Colors (can be customized)
-  static const Color? primaryColor = null; // Will use default Material colors
-  static const Color? secondaryColor = null; // Will use default Material colors
-  static const Color? tertiaryColor = null; // Will use default Material colors
-  
+  static const Color primaryColor = Color(0xFF22369D); // Will use default Material colors
+  static const Color secondaryColor = Color(0XFFFFFFFF); // Will use default Material colors
+  static const Color tertiaryColor = Color(0xF8F8F8F8); // Will use default Material colors
+
   // Semantic Colors
   static const Color successColor = Color(0xFF4CAF50);
   static const Color errorColor = Color(0xFFF44336);
@@ -13,8 +13,8 @@ class AppColors {
   static const Color infoColor = Color(0xFF2196F3);
   
   // Neutral Colors
-  static const Color backgroundColor = Colors.white;
-  static const Color surfaceColor = Color(0xFFF5F5F5);
+  static const Color backgroundColor = Color(0xF8F8F8F8);
+  static const Color surfaceColor = Color(0xFFFFFFFF);
   static const Color dividerColor = Color(0xFFE0E0E0);
   
   // Text Colors

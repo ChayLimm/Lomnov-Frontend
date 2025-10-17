@@ -49,7 +49,7 @@ class _AuthViewState extends State<AuthView> {
               ),
               TextField(
                 controller: passCtrl,
-                decoration: const InputDecoration(labelText: 'Password'),
+                decoration: const InputDecoration(labelText: 'Passwords'),
                 obscureText: true,
                 onSubmitted: (_) => _submit(vm),
               ),

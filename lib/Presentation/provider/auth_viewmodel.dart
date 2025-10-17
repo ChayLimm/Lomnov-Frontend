@@ -2,6 +2,7 @@ import 'package:app/data/repositories/auth_repository.dart';
 import 'package:app/domain/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:app/domain/services/auth_service.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final AuthRepository _repo = AuthRepository();
@@ -22,6 +23,8 @@ class AuthViewModel extends ChangeNotifier {
     try {
       _user = await _repo.login(email, password);
       if (_user != null) {
+        // Persist landlord_id = user.id for downstream services
+        await AuthService().setLandlordId(_user!.id);
         // Delay to ensure listeners finish building frames before navigation
         Future.microtask(() => Get.offAllNamed('/home'));
       }
@@ -41,6 +44,7 @@ class AuthViewModel extends ChangeNotifier {
     try {
       _user = await _repo.register(name, email, password);
       if (_user != null) {
+        await AuthService().setLandlordId(_user!.id);
         Future.microtask(() => Get.offAllNamed('/home'));
       }
     } catch (e) {

@@ -13,13 +13,38 @@ class AppTheme {
       
       // Enhanced Color Scheme
       colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primaryColor ?? Colors.blue,
+  seedColor: AppColors.primaryColor,
         brightness: Brightness.light,
       ).copyWith(
         error: AppColors.errorColor,
         surface: AppColors.surfaceColor,
       ),
       
+      // Buttons
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.primaryColor,
+          foregroundColor: AppColors.secondaryColor,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryColor,
+          foregroundColor: AppColors.secondaryColor,
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.primaryColor,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primaryColor,
+          side: const BorderSide(color: AppColors.primaryColor),
+        ),
+      ),
+
       // Card Theme
       cardTheme: CardThemeData(
         elevation: 2,
@@ -63,13 +88,38 @@ class AppTheme {
       
       // Enhanced Color Scheme for Dark
       colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primaryColor ?? Colors.blue,
+  seedColor: AppColors.primaryColor,
         brightness: Brightness.dark,
       ).copyWith(
         error: AppColors.errorColor,
         surface: AppColors.darkSurface,
       ),
       
+      // Buttons (Dark)
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.primaryColor,
+          foregroundColor: AppColors.secondaryColor,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryColor,
+          foregroundColor: AppColors.secondaryColor,
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.primaryColor,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primaryColor,
+          side: const BorderSide(color: AppColors.primaryColor),
+        ),
+      ),
+
       // Card Theme for Dark
       cardTheme: CardThemeData(
         elevation: 4,

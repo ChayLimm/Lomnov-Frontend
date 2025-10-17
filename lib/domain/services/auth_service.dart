@@ -4,9 +4,15 @@ import 'dart:developer' as dev;
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthService {
   late final String _baseUrl = _normalizeBaseUrl(dotenv.env['BASE_URL'] ?? '');
+
+  // Persisted auth token (secure)
+  static const _tokenKey = 'auth_token';
+  static const _landlordIdKey = 'landlord_id';
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   // Public API --------------------------------------------------------------
   Future<Map<String, dynamic>> register(Map<String, dynamic> data) async =>
@@ -15,6 +21,22 @@ class AuthService {
   Future<Map<String, dynamic>> login(Map<String, dynamic> data) async =>
       _postJson('/api/login', data, fallbackError: 'Login failed');
 
+  Future<void> logout() => _clearToken();
+  Future<String?> getToken() => _storage.read(key: _tokenKey);
+  Future<bool> isLoggedIn() async => (await getToken())?.isNotEmpty == true;
+
+  // Landlord ID helpers
+  Future<void> setLandlordId(int? id) async {
+    if (id == null) return;
+    await _storage.write(key: _landlordIdKey, value: id.toString());
+  }
+
+  Future<int?> getLandlordId() async {
+    final v = await _storage.read(key: _landlordIdKey);
+    if (v == null) return null;
+    return int.tryParse(v);
+  }
+
   // Core HTTP helper -------------------------------------------------------
   Future<Map<String, dynamic>> _postJson(
     String path,
@@ -22,13 +44,22 @@ class AuthService {
     required String fallbackError,
   }) async {
     final uri = Uri.parse('$_baseUrl$path');
-    dev.log('[HTTP] POST $uri body=${jsonEncode(data)}');
+
+    // Attach token if present
+    final headers = <String, String>{'Content-Type': 'application/json'};
+    final existingToken = await getToken();
+    if (existingToken != null && existingToken.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $existingToken';
+    }
+
+    // Redact sensitive values from logs
+    dev.log('[HTTP] POST $uri body=${jsonEncode(_redact(data))}');
     http.Response response;
     try {
       response = await http
           .post(
             uri,
-            headers: const {'Content-Type': 'application/json'},
+            headers: headers,
             body: jsonEncode(data),
           )
           .timeout(const Duration(seconds: 20));
@@ -48,19 +79,28 @@ class AuthService {
 
     dynamic decoded;
     if (bodyStr.isEmpty) {
-      // Some endpoints (esp. failures) may return no body.
       decoded = <String, dynamic>{};
     } else {
       decoded = _tryDecodeJson(bodyStr);
     }
 
     if (status >= 200 && status < 300) {
-      if (decoded is Map<String, dynamic>) return decoded;
-      // Unexpected non-map success payload.
+      if (decoded is Map<String, dynamic>) {
+        // Auto-persist token if present
+        final newToken = _extractToken(decoded);
+        if (newToken != null && newToken.isNotEmpty) {
+          await _saveToken(newToken);
+        }
+        // Auto-persist landlord_id if present
+        final landlordId = _extractLandlordId(decoded);
+        if (landlordId != null) {
+          await setLandlordId(landlordId);
+        }
+        return decoded;
+      }
       return {'raw': decoded};
     }
 
-    // Error branch
     final message = _extractMessage(decoded, fallbackError);
     throw Exception(message);
   }
@@ -70,7 +110,6 @@ class AuthService {
     try {
       return jsonDecode(body);
     } on FormatException catch (e) {
-      // Return raw body so caller can still surface something meaningful.
       dev.log('JSON decode failed: $e');
       return {'raw': body};
     }
@@ -86,11 +125,82 @@ class AuthService {
             .join('\n');
       }
       if (decoded['raw'] is String && decoded['raw'].toString().isNotEmpty) {
-        // Possibly HTML or plain text error.
         return decoded['raw'];
       }
     }
     return fallback;
+  }
+
+  // Common token shapes
+  String? _extractToken(Map<String, dynamic> json) {
+    if (json['token'] is String) return json['token'] as String;
+    if (json['access_token'] is String) return json['access_token'] as String;
+    if (json['data'] is Map && (json['data']['token'] is String)) {
+      return json['data']['token'] as String;
+    }
+    return null;
+  }
+
+  // Extract landlord_id from common response shapes
+  int? _extractLandlordId(Map<String, dynamic> json) {
+    int? asInt(dynamic v) => v is int
+        ? v
+        : (v is String ? int.tryParse(v) : null);
+
+    int? tryGet(Map<String, dynamic> m) {
+      // Direct landlord fields
+      final l1 = asInt(m['landlord_id']) ?? asInt(m['landlordId']);
+      if (l1 != null) return l1;
+
+      // From user object
+      if (m['user'] is Map<String, dynamic>) {
+        final u = m['user'] as Map<String, dynamic>;
+        final l2 = asInt(u['landlord_id']) ?? asInt(u['landlordId']);
+        if (l2 != null) return l2;
+        // Fallback: use user.id as landlord_id
+        final uid = asInt(u['id']);
+        if (uid != null) return uid;
+      }
+
+      // From data wrapper
+      if (m['data'] is Map<String, dynamic>) {
+        final d = m['data'] as Map<String, dynamic>;
+        final l3 = asInt(d['landlord_id']) ?? asInt(d['landlordId']);
+        if (l3 != null) return l3;
+        if (d['user'] is Map<String, dynamic>) {
+          final u = d['user'] as Map<String, dynamic>;
+          final l4 = asInt(u['landlord_id']) ?? asInt(u['landlordId']);
+          if (l4 != null) return l4;
+          final uid = asInt(u['id']);
+          if (uid != null) return uid;
+        }
+        // Fallback: use data.id
+        final did = asInt(d['id']);
+        if (did != null) return did;
+      }
+
+      // Absolute fallback: top-level id
+      final idTop = asInt(m['id']);
+      if (idTop != null) return idTop;
+
+      return null;
+    }
+
+    return tryGet(json);
+  }
+
+  Future<void> _saveToken(String token) => _storage.write(key: _tokenKey, value: token);
+  Future<void> _clearToken() async {
+    await _storage.delete(key: _tokenKey);
+    await _storage.delete(key: _landlordIdKey);
+  }
+
+  Map<String, dynamic> _redact(Map<String, dynamic> data) {
+    final copy = Map<String, dynamic>.from(data);
+    for (final k in ['password', 'pass', 'password_confirmation']) {
+      if (copy.containsKey(k)) copy[k] = '***';
+    }
+    return copy;
   }
 
   String _normalizeBaseUrl(String input) {
@@ -99,7 +209,6 @@ class AuthService {
       throw Exception('BASE_URL is not set. Add BASE_URL to your .env');
     }
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      // Assume https for ngrok free domain; change if backend only serves http.
       url = 'https://$url';
     }
     if (url.endsWith('/')) url = url.substring(0, url.length - 1);
