@@ -1,3 +1,4 @@
+import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import 'package:get/get.dart';
@@ -49,7 +50,7 @@ class _HomeViewState extends State<HomeView> {
               currentIndex: _index,
               onTap: (i) => setState(() => _index = i),
               // Dark frosted glass background
-              backgroundColor: Colors.black.withValues(alpha: 0.28),
+              backgroundColor: Colors.white.withValues(alpha: 0.20),
               // Subtle white outline like the screenshot
               outlineBorderColor: Colors.white.withValues(alpha: 0.40),
               borderWidth: 1,
@@ -61,7 +62,7 @@ class _HomeViewState extends State<HomeView> {
                 ),
               ],
               unselectedItemColor: Colors.white.withValues(alpha: 0.80),
-              selectedItemColor: Colors.white,
+              selectedItemColor: AppColors.primaryColor,
               borderRadius: 28,
               height: 64,
               enableFloatingNavBar: true,

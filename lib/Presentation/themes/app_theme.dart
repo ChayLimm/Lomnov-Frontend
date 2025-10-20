@@ -8,7 +8,10 @@ class AppTheme {
       useMaterial3: true,
       primaryColor: AppColors.primaryColor,
       scaffoldBackgroundColor: AppColors.backgroundColor,
-      textTheme: TextStyles.textTheme,
+      textTheme: LomTextStyles.textTheme.apply(
+        bodyColor: AppColors.textPrimary,
+        displayColor: AppColors.textPrimary,
+      ),
       visualDensity: VisualDensity.adaptivePlatformDensity,
       
       // Enhanced Color Scheme
@@ -80,7 +83,7 @@ class AppTheme {
       useMaterial3: true,
       primaryColor: AppColors.primaryColor,
       scaffoldBackgroundColor: AppColors.darkBackground,
-      textTheme: TextStyles.textTheme.apply(
+      textTheme: LomTextStyles.textTheme.apply(
         bodyColor: AppColors.darkTextPrimary,
         displayColor: AppColors.darkTextPrimary,
       ),

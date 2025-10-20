@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // Primary Colors (can be customized)
-  static const Color primaryColor = Color(0xFF22369D); // Will use default Material colors
+
+  static const Color primaryColor = Color(0xFF22369D); // Use a solid primary color instead of a LinearGradient
+  static const LinearGradient primaryGradient = LinearGradient(colors: [Color(0xFF4D8CE4), Color(0xFF22369D)]); // Optional gradient
   static const Color secondaryColor = Color(0XFFFFFFFF); // Will use default Material colors
-  static const Color tertiaryColor = Color(0xF8F8F8F8); // Will use default Material colors
+  static const Color tertiaryColor = Color(0xFFF8F8F8); // Will use default Material colors
+ 
 
   // Semantic Colors
   static const Color successColor = Color(0xFF4CAF50);

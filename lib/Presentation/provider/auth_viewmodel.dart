@@ -54,4 +54,17 @@ class AuthViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> logout() async {
+    // Clear persisted auth (token + landlord id)
+    await AuthService().logout();
+    // Clear in-memory user and errors
+    _user = null;
+    _error = null;
+    notifyListeners();
+    // Navigate to login/root
+    if (Get.currentRoute != '/' && Get.currentRoute.isNotEmpty) {
+      Get.offAllNamed('/');
+    }
+  }
 }

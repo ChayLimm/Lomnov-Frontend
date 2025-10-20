@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:app/Presentation/widgets/error1.dart';
 import 'package:app/Presentation/widgets/empty1.dart';
+import 'package:app/Presentation/themes/app_colors.dart';
 
 class BuildingDetailView extends StatefulWidget {
   final int buildingId;
@@ -29,7 +30,10 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final b = await _service.fetchBuildingById(widget.buildingId);
       setState(() => _building = b);
@@ -49,33 +53,30 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Get.back(),
-        ),
-        title: const Text('Building'),
-      ),
-      body: RefreshIndicator(
-        onRefresh: _load,
-        child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : _error != null
-                ? ListView(
-                    children: [
-                      const SizedBox(height: 40),
-                      ErrorState(message: _error),
-                      const SizedBox(height: 16),
-                      Center(
-                        child: FilledButton(onPressed: _load, child: const Text('Retry')),
+    extendBodyBehindAppBar: true, // image can go behind the status bar
+    body: RefreshIndicator(
+      onRefresh: _load,
+      child: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+              ? ListView(
+                  children: [
+                    const SizedBox(height: 40),
+                    ErrorState(message: _error),
+                    const SizedBox(height: 16),
+                    Center(
+                      child: FilledButton(
+                        onPressed: _load,
+                        child: const Text('Retry'),
                       ),
-                      const SizedBox(height: 40),
-                    ],
-                  )
-                : _buildContent(context),
-      ),
-    );
-  }
+                    ),
+                    const SizedBox(height: 40),
+                  ],
+                )
+              : _buildContent(context),
+    ),
+  );
+}
 
   Widget _buildContent(BuildContext context) {
     final b = _building!;
@@ -83,31 +84,47 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
     final filtered = _filteredRooms(b.rooms);
     return CustomScrollView(
       slivers: [
+        // Header image (no rounding)
+        SliverAppBar(
+          pinned: true,
+          expandedHeight: 220,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.white,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Get.back(),
+          ),
+          flexibleSpace: FlexibleSpaceBar(
+            background: hasImage
+                ? Image.network(
+                    b.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => _imgPlaceholder(),
+                  )
+                : _imgPlaceholder(),
+          ),
+        ),
+
+        // Rounded body that overlaps the image
         SliverToBoxAdapter(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Header image
-              SizedBox(
-                height: 180,
-                child: hasImage
-                    ? Image.network(b.imageUrl, fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => _imgPlaceholder())
-                    : _imgPlaceholder(),
-              ),
-              // Rounded panel
-              Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-                ),
+          child: Transform.translate(
+            offset: const Offset(0, -16), // overlap onto the image
+            child: Material(
+              color: Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+              clipBehavior: Clip.antiAlias, // enforce the rounded top
+              child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       b.name,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -126,7 +143,12 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    Text('Room list', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                    Text(
+                      'Room list',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 10),
                     Row(
                       children: [
@@ -136,20 +158,38 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
                             decoration: InputDecoration(
                               hintText: 'Search Room',
                               prefixIcon: const Icon(Icons.search),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 0,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                               isDense: true,
                             ),
                           ),
                         ),
                         const SizedBox(width: 12),
                         SizedBox(
-                          height: 40,
-                          child: FilledButton(
+                          height: 48,
+                          child: FilledButton.icon(
+                            style: FilledButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              backgroundColor: AppColors.primaryColor,
+                            ),
                             onPressed: () {
-                              Get.snackbar('Coming soon', 'Add Room form not implemented yet');
+                              Get.snackbar(
+                                'Coming soon',
+                                'Add Room form not implemented yet',
+                              );
                             },
-                            child: const Text('+Add'),
+                            icon: const Icon(Icons.add),
+                            label: const Text('Add'),
                           ),
                         ),
                       ],
@@ -159,11 +199,26 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        for (final label in const ['All','Available','Unpaid','Pending','Paid'])
+                        for (final label in const [
+                          'All',
+                          'Available',
+                          'Unpaid',
+                          'Pending',
+                          'Paid',
+                        ])
                           ChoiceChip(
                             label: Text(label),
                             selected: _activeFilter == label,
                             onSelected: (_) => setState(() => _activeFilter = label),
+                            showCheckmark: false,
+                            selectedColor: AppColors.primaryColor,
+                            labelStyle: TextStyle(
+                              color: _activeFilter == label
+                                  ? Colors.white
+                                  : Colors.black87,
+                            ),
+
+                            backgroundColor: Colors.grey[100],
                           ),
                       ],
                     ),
@@ -171,16 +226,19 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
                   ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
+        // Compensate the negative translate for scroll
+        const SliverToBoxAdapter(child: SizedBox(height: 16)),
         // Rooms
         if (filtered.isEmpty)
           SliverFillRemaining(
             hasScrollBody: false,
             child: EmptyState(
               title: 'No rooms found',
-              subtitle: 'Try adding a room or changing the search or filter above.',
+              subtitle:
+                  'Try adding a room or changing the search or filter above.',
             ),
           )
         else
@@ -191,7 +249,10 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
               final statusLabel = _deriveStatusLabel(r.status);
               final pillColor = _statusColor(statusLabel);
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 child: Container(
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surface,
@@ -207,21 +268,35 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
                           color: Theme.of(context).colorScheme.primary,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.bed_rounded, color: Colors.white),
+                        child: const Icon(
+                          Icons.bed_rounded,
+                          color: Colors.white,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Room : ${r.name}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                            Text(
+                              'Room : ${r.name}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             const SizedBox(height: 2),
-                            Text('Floor  : ${b.floor.toString().padLeft(2, '0')}', style: const TextStyle(color: Colors.black87)),
+                            Text(
+                              'Floor  : ${b.floor.toString().padLeft(2, '0')}',
+                              style: const TextStyle(color: Colors.black87),
+                            ),
                           ],
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: pillColor,
                           borderRadius: BorderRadius.circular(8),
@@ -276,7 +351,7 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
   }
 
   Widget _imgPlaceholder() => Container(
-        color: Colors.grey.shade300,
-        child: const Center(child: Icon(Icons.image_not_supported_outlined)),
-      );
+    color: Colors.grey.shade300,
+    child: const Center(child: Icon(Icons.image_not_supported_outlined)),
+  );
 }

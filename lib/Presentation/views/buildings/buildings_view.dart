@@ -169,16 +169,22 @@ class _BuildingsViewState extends State<BuildingsView> {
                 const SizedBox(width: 12),
                 SizedBox(
                   height: 48,
-                  child: FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      backgroundColor: AppColors.primaryColor,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      gradient: AppColors.primaryGradient,
                     ),
-                    onPressed: _onAddBuilding,
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add'),
-                    
+                    child: FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        backgroundColor: Colors.transparent,
+                        elevation: 0,
+                      ),
+                      onPressed: _onAddBuilding,
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add'),
+                    ),
                   ),
                 ),
               ],
