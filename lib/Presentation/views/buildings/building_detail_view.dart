@@ -1,5 +1,5 @@
 import 'package:app/domain/models/building_model.dart';
-import 'package:app/domain/services/building_service.dart';
+import 'package:app/data/implementations/building/building_implementation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:app/Presentation/widgets/error1.dart';
@@ -15,7 +15,7 @@ class BuildingDetailView extends StatefulWidget {
 }
 
 class _BuildingDetailViewState extends State<BuildingDetailView> {
-  final _service = BuildingService();
+  final _repository = BuildingRepositoryImpl();
   bool _loading = true;
   String? _error;
   BuildingModel? _building;
@@ -35,7 +35,7 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
       _error = null;
     });
     try {
-      final b = await _service.fetchBuildingById(widget.buildingId);
+      final b = await _repository.fetchBuildingById(widget.buildingId);
       setState(() => _building = b);
     } catch (e) {
       setState(() => _error = e.toString());

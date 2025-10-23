@@ -1,4 +1,4 @@
-import 'package:app/domain/services/building_service.dart';
+import 'package:app/data/implementations/building/building_implementation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
@@ -40,7 +40,7 @@ class _AddBuildingViewState extends State<AddBuildingView> {
   final _imageUrlCtrl = TextEditingController();
   final _floorCtrl = TextEditingController(text: '4');
   final _unitCtrl = TextEditingController(text: '20');
-  final _service = BuildingService();
+  final _repository = BuildingRepositoryImpl();
 
   bool _submitting = false;
 
@@ -97,7 +97,7 @@ class _AddBuildingViewState extends State<AddBuildingView> {
       landlordId ??= context.read<AuthViewModel>().user?.id;
       if (widget.editingBuildingId != null) {
         // Edit mode - send update
-        final updated = await _service.updateBuilding(
+        final updated = await _repository.updateBuilding(
           id: widget.editingBuildingId!,
           landlordId: landlordId,
           name: _nameCtrl.text.trim(),
@@ -112,7 +112,7 @@ class _AddBuildingViewState extends State<AddBuildingView> {
         Get.snackbar('Success', 'Building updated');
       } else {
         // Create mode
-        final created = await _service.createBuilding(
+        final created = await _repository.createBuilding(
           landlordId: landlordId,
           name: _nameCtrl.text.trim(),
           address: _addressCtrl.text.trim(),

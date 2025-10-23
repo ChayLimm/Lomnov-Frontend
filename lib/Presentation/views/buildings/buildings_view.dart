@@ -1,5 +1,5 @@
 import 'package:app/domain/models/building_model.dart';
-import 'package:app/domain/services/building_service.dart';
+import 'package:app/data/implementations/building/building_implementation.dart';
 import 'package:flutter/material.dart';
 import 'package:app/Presentation/widgets/search_bar.dart';
 import 'package:app/Presentation/views/buildings/widgets/building_card.dart';
@@ -21,7 +21,7 @@ class BuildingsView extends StatefulWidget {
 }
 
 class _BuildingsViewState extends State<BuildingsView> {
-  final _service = BuildingService();
+  final _repository = BuildingRepositoryImpl();
   final _searchCtrl = TextEditingController();
   bool _loading = true;
   String? _error;
@@ -47,7 +47,7 @@ class _BuildingsViewState extends State<BuildingsView> {
       _error = null;
     });
     try {
-      final res = await _service.fetchBuildings();
+      final res = await _repository.fetchBuildings();
       setState(() {
         _all = res;
       });
@@ -274,7 +274,7 @@ class _BuildingsViewState extends State<BuildingsView> {
                               builder: (_) => const Center(child: CircularProgressIndicator()),
                             );
                             try {
-                              await _service.deleteBuilding(building.id);
+                              await _repository.deleteBuilding(building.id);
                               // remove from local list and refresh UI
                               setState(() {
                                 _all = _all.where((b) => b.id != building.id).toList();

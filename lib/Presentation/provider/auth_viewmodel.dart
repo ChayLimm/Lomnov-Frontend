@@ -1,11 +1,11 @@
-import 'package:app/data/repositories/auth_repository.dart';
+import 'package:app/data/implementations/auth/auth_implementation.dart';
 import 'package:app/domain/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:app/domain/services/auth_service.dart';
 
 class AuthViewModel extends ChangeNotifier {
-  final AuthRepository _repo = AuthRepository();
+  final AuthRepositoryImpl _repo = AuthRepositoryImpl();
 
   bool _loading = false;
   String? _error;
