@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:developer' as dev;
+import 'package:app/data/services/buildings/api_base.dart';
+import 'package:app/data/services/http_error_handler.dart';
 import 'package:app/domain/models/building_model.dart';
-import 'package:app/domain/services/buildings/api_base.dart';
-import 'package:app/domain/services/http_error_handler.dart';
 
 class BuildingMutationService extends ApiBase {
   Future<void> deleteBuilding(int id) async {
@@ -10,7 +10,7 @@ class BuildingMutationService extends ApiBase {
     final headers = await buildHeaders();
 
     dev.log('[HTTP] DELETE $uri');
-    
+
     final response = await HttpErrorHandler.executeRequest(
       () => httpClient.delete(uri, headers: headers),
     );
@@ -37,6 +37,7 @@ class BuildingMutationService extends ApiBase {
     void addIfNonNull(String key, dynamic value) {
       if (value != null) payload[key] = value;
     }
+
     addIfNonNull('landlord_id', landlordId);
     addIfNonNull('name', name);
     addIfNonNull('address', address);
@@ -45,7 +46,7 @@ class BuildingMutationService extends ApiBase {
     addIfNonNull('unit', unit);
 
     dev.log('[HTTP] PUT $uri body=${jsonEncode(payload)}');
-    
+
     final response = await HttpErrorHandler.executeRequest(
       () => httpClient.put(uri, headers: headers, body: jsonEncode(payload)),
     );
@@ -62,11 +63,11 @@ class BuildingMutationService extends ApiBase {
       }
       return BuildingModel.fromJson(decoded);
     }
-    
+
     if (decoded is List && decoded.isNotEmpty && decoded.first is Map) {
       return BuildingModel.fromJson(decoded.first as Map<String, dynamic>);
     }
-    
+
     throw Exception('Unexpected response format');
   }
 
@@ -92,7 +93,7 @@ class BuildingMutationService extends ApiBase {
     if (landlord != null) payload['landlord_id'] = landlord;
 
     dev.log('[HTTP] POST $uri body=${jsonEncode(payload)}');
-    
+
     final response = await HttpErrorHandler.executeRequest(
       () => httpClient.post(uri, headers: headers, body: jsonEncode(payload)),
     );
@@ -109,11 +110,11 @@ class BuildingMutationService extends ApiBase {
       }
       return BuildingModel.fromJson(decoded);
     }
-    
+
     if (decoded is List && decoded.isNotEmpty && decoded.first is Map) {
       return BuildingModel.fromJson(decoded.first as Map<String, dynamic>);
     }
-    
+
     throw Exception('Unexpected response format');
   }
 }

@@ -1,9 +1,9 @@
+import 'package:app/data/services/auth_service.dart';
 import 'package:app/domain/models/user_model.dart';
 import 'package:app/domain/repositories/auth_repository.dart';
-import 'package:app/domain/services/auth_service.dart';
 
 /// Implementation of [AuthRepository] using [AuthService].
-/// 
+///
 /// This class provides concrete implementations of authentication operations
 /// by delegating to the [AuthService] and transforming responses into domain models.
 class AuthRepositoryImpl implements AuthRepository {

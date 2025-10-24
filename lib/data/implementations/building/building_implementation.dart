@@ -1,10 +1,10 @@
+import 'package:app/data/services/buildings/fetch_service.dart';
+import 'package:app/data/services/buildings/mutation_service.dart';
 import 'package:app/domain/models/building_model.dart';
 import 'package:app/domain/repositories/building_repository.dart';
-import 'package:app/domain/services/buildings/fetch_service.dart';
-import 'package:app/domain/services/buildings/mutation_service.dart';
 
 /// Implementation of [BuildingRepository] using building services.
-/// 
+///
 /// This class provides concrete implementations of building operations
 /// by delegating to [BuildingFetchService] and [BuildingMutationService].
 class BuildingRepositoryImpl implements BuildingRepository {
@@ -12,8 +12,10 @@ class BuildingRepositoryImpl implements BuildingRepository {
   final BuildingMutationService _mutationService = BuildingMutationService();
 
   @override
-  Future<List<BuildingModel>> fetchBuildings() async {
-    return await _fetchService.fetchBuildings();
+  Future<List<BuildingModel>> fetchBuildings({int? landlordId}) async {
+    return await _fetchService.fetchBuildingsForLandlord(
+      landlordId: landlordId,
+    );
   }
 
   @override

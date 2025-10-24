@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:developer' as dev;
+import 'package:app/data/services/auth_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
-import 'package:app/domain/services/auth_service.dart';
 
 /// Internal base class providing common HTTP utilities (base URL, headers).
 class ApiBase {

@@ -2,16 +2,15 @@ import 'package:app/Presentation/provider/auth_viewmodel.dart';
 import 'package:app/Presentation/views/auth_view.dart';
 import 'package:app/Presentation/views/home_view.dart';
 import 'package:app/Presentation/views/buildings/buildings_view.dart';
+import 'package:app/data/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
-import 'package:app/domain/services/auth_service.dart';
 import 'package:app/Presentation/views/buildings/add_building_view.dart';
 import 'package:app/Presentation/views/buildings/building_detail_view.dart';
 
 Future<void> main() async {
-  
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
 
@@ -22,9 +21,7 @@ Future<void> main() async {
 
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthViewModel()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => AuthViewModel())],
       child: MyApp(initialRoute: initial),
     ),
   );
