@@ -1,10 +1,14 @@
-import 'package:app/domain/models/building_model.dart';
+import 'package:app/domain/models/building_model/building_model.dart';
 import 'package:app/data/implementations/building/building_implementation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:app/Presentation/widgets/error1.dart';
-import 'package:app/Presentation/widgets/empty1.dart';
-import 'package:app/Presentation/themes/app_colors.dart';
+import 'package:app/presentation/widgets/error1.dart';
+import 'package:app/presentation/widgets/empty1.dart';
+import 'package:app/presentation/themes/app_colors.dart';
+
+// Layout constants
+const double headerHeight = 230; // Top image height
+const double topRadius = 20; // Match the large rounded top design
 
 class BuildingDetailView extends StatefulWidget {
   final int buildingId;
@@ -36,9 +40,10 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
     });
     try {
       final b = await _repository.fetchBuildingById(widget.buildingId);
+      if (!mounted) return;
       setState(() => _building = b);
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = e.toString());
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -53,13 +58,14 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+    backgroundColor: const Color(0xFFF8F8F8),
     extendBodyBehindAppBar: true, // image can go behind the status bar
-    body: RefreshIndicator(
-      onRefresh: _load,
-      child: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? ListView(
+    body: _loading
+        ? const Center(child: CircularProgressIndicator())
+        : _error != null
+            ? RefreshIndicator(
+                onRefresh: _load,
+                child: ListView(
                   children: [
                     const SizedBox(height: 40),
                     ErrorState(message: _error),
@@ -72,9 +78,9 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
                     ),
                     const SizedBox(height: 40),
                   ],
-                )
-              : _buildContent(context),
-    ),
+                ),
+              )
+            : _buildContent(context),
   );
 }
 
@@ -82,234 +88,251 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
     final b = _building!;
     final hasImage = b.imageUrl.isNotEmpty;
     final filtered = _filteredRooms(b.rooms);
-    return CustomScrollView(
-      slivers: [
-        // Header image (no rounding)
-        SliverAppBar(
-          pinned: true,
-          expandedHeight: 220,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          backgroundColor: Colors.transparent,
-          foregroundColor: Colors.white,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Get.back(),
-          ),
-          flexibleSpace: FlexibleSpaceBar(
-            background: hasImage
-                ? Image.network(
-                    b.imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => _imgPlaceholder(),
-                  )
-                : _imgPlaceholder(),
-          ),
+    return Stack(
+      children: [
+        // Back layer: header image filling the top portion
+        SizedBox(
+          height: headerHeight,
+          width: double.infinity,
+          child: hasImage
+              ? Image.network(
+                  b.imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => _imgPlaceholder(),
+                )
+              : _imgPlaceholder(),
         ),
-
-        // Rounded body that overlaps the image
-        SliverToBoxAdapter(
-          child: Transform.translate(
-            offset: const Offset(0, -16), // overlap onto the image
-            child: Material(
-              color: Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
-              clipBehavior: Clip.antiAlias, // enforce the rounded top
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      b.name,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
+        // Foreground: scrollable content that starts after the header
+        RefreshIndicator(
+          onRefresh: _load,
+          child: CustomScrollView(
+            slivers: [
+              // Spacer to push content below the header, letting the rounded
+              // top overlap the image nicely by `topRadius`.
+              SliverToBoxAdapter(
+                child: SizedBox(height: headerHeight - topRadius),
+              ),
+              // Rounded body that sits on top of the image
+              SliverToBoxAdapter(
+                child: Material(
+                  color: Colors.white,
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(topRadius)),
+                  clipBehavior: Clip.antiAlias,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.location_on_outlined, size: 16),
-                        const SizedBox(width: 6),
-                        Expanded(child: Text(b.address)),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.apartment, size: 16),
-                        const SizedBox(width: 6),
-                        Text('${b.floor} floors, ${b.unit} parking spaces'),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Room list',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _roomSearchCtrl,
-                            decoration: InputDecoration(
-                              hintText: 'Search Room',
-                              prefixIcon: const Icon(Icons.search),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 0,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              isDense: true,
-                            ),
-                          ),
+                        Text(
+                          b.name,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w700),
                         ),
-                        const SizedBox(width: 12),
-                        SizedBox(
-                          height: 48,
-                          child: FilledButton.icon(
-                            style: FilledButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              backgroundColor: AppColors.primaryColor,
-                            ),
-                            onPressed: () {
-                              Get.snackbar(
-                                'Coming soon',
-                                'Add Room form not implemented yet',
-                              );
-                            },
-                            icon: const Icon(Icons.add),
-                            label: const Text('Add'),
-                          ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on_outlined, size: 16),
+                            const SizedBox(width: 6),
+                            Expanded(child: Text(b.address)),
+                          ],
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final label in const [
-                          'All',
-                          'Available',
-                          'Unpaid',
-                          'Pending',
-                          'Paid',
-                        ])
-                          ChoiceChip(
-                            label: Text(label),
-                            selected: _activeFilter == label,
-                            onSelected: (_) => setState(() => _activeFilter = label),
-                            showCheckmark: false,
-                            selectedColor: AppColors.primaryColor,
-                            labelStyle: TextStyle(
-                              color: _activeFilter == label
-                                  ? Colors.white
-                                  : Colors.black87,
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(Icons.apartment, size: 16),
+                            const SizedBox(width: 6),
+                            Text('${b.floor} floors, ${b.unit} parking spaces'),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Room list',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _roomSearchCtrl,
+                                decoration: InputDecoration(
+                                  hintText: 'Search Room',
+                                  prefixIcon: const Icon(Icons.search),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 0,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  isDense: true,
+                                ),
+                              ),
                             ),
-
-                            backgroundColor: Colors.grey[100],
-                          ),
+                            const SizedBox(width: 12),
+                            SizedBox(
+                              height: 48,
+                              child: FilledButton.icon(
+                                style: FilledButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  backgroundColor: AppColors.primaryColor,
+                                ),
+                                onPressed: () {
+                                  Get.snackbar(
+                                    'Coming soon',
+                                    'Add Room form not implemented yet',
+                                  );
+                                },
+                                icon: const Icon(Icons.add),
+                                label: const Text('Add'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final label in const [
+                              'All',
+                              'Available',
+                              'Unpaid',
+                              'Pending',
+                              'Paid',
+                            ])
+                              ChoiceChip(
+                                label: Text(label),
+                                selected: _activeFilter == label,
+                                onSelected: (_) =>
+                                    setState(() => _activeFilter = label),
+                                showCheckmark: false,
+                                selectedColor: AppColors.primaryColor,
+                                labelStyle: TextStyle(
+                                  color: _activeFilter == label
+                                      ? Colors.white
+                                      : Colors.black87,
+                                ),
+                                backgroundColor: Colors.grey[100],
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
-        ),
-        // Compensate the negative translate for scroll
-        const SliverToBoxAdapter(child: SizedBox(height: 16)),
-        // Rooms
-        if (filtered.isEmpty)
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: EmptyState(
-              title: 'No rooms found',
-              subtitle:
-                  'Try adding a room or changing the search or filter above.',
-            ),
-          )
-        else
-          SliverList.builder(
-            itemCount: filtered.length,
-            itemBuilder: (ctx, i) {
-              final r = filtered[i];
-              final statusLabel = _deriveStatusLabel(r.status);
-              final pillColor = _statusColor(statusLabel);
-              return Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
+              // Rooms
+              if (filtered.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: EmptyState(
+                    title: 'No rooms found',
+                    subtitle:
+                        'Try adding a room or changing the search or filter above.',
                   ),
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.bed_rounded,
-                          color: Colors.white,
-                        ),
+                )
+              else
+                SliverList.builder(
+                  itemCount: filtered.length,
+                  itemBuilder: (ctx, i) {
+                    final r = filtered[i];
+                    final statusLabel = _deriveStatusLabel(r.status);
+                    final pillColor = _statusColor(statusLabel);
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
                           children: [
-                            Text(
-                              'Room : ${r.name}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primary,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.bed_rounded,
+                                color: Colors.white,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Floor  : ${b.floor.toString().padLeft(2, '0')}',
-                              style: const TextStyle(color: Colors.black87),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Room : ${r.name}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Floor  : ${b.floor.toString().padLeft(2, '0')}',
+                                    style:
+                                        const TextStyle(color: Colors.black87),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: pillColor,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(statusLabel),
                             ),
                           ],
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: pillColor,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(statusLabel),
-                      ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
-              );
-            },
+              const SliverToBoxAdapter(child: SizedBox(height: 20)),
+            ],
           ),
-        const SliverToBoxAdapter(child: SizedBox(height: 20)),
+        ),
+        // Top-left back button overlayed above the image
+        SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: IconButton(
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.black.withValues(alpha: 0.35),
+                ),
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => Get.back(),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }

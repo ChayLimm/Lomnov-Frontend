@@ -1,6 +1,6 @@
 import 'package:app/data/implementations/auth/auth_implementation.dart';
-import 'package:app/data/services/auth_service.dart';
-import 'package:app/domain/models/user_model.dart';
+import 'package:app/data/services/auth_service/auth_service.dart';
+import 'package:app/domain/models/user_model/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -16,6 +16,11 @@ class AuthViewModel extends ChangeNotifier {
   UserModel? get user => _user;
 
   Future<void> login(String email, String password) async {
+    if (email.isEmpty || password.isEmpty) {
+      _error = 'Please fill in all fields.';
+      notifyListeners();
+      return;
+    }
     _loading = true;
     _error = null;
     notifyListeners();
@@ -27,9 +32,11 @@ class AuthViewModel extends ChangeNotifier {
         await AuthService().setLandlordId(_user!.id);
         // Delay to ensure listeners finish building frames before navigation
         Future.microtask(() => Get.offAllNamed('/home'));
+      } else {
+        _error = 'Login failed. Please check your credentials and try again.';
       }
     } catch (e) {
-      _error = e.toString();
+      _error = 'An error occurred. Please check your internet connection and try again.';
     } finally {
       _loading = false;
       notifyListeners();

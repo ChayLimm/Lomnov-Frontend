@@ -1,17 +1,17 @@
-import 'package:app/domain/models/building_model.dart';
+import 'package:app/domain/models/building_model/building_model.dart';
 import 'package:app/data/implementations/building/building_implementation.dart';
 import 'package:flutter/material.dart';
-import 'package:app/Presentation/widgets/search_bar.dart';
-import 'package:app/Presentation/views/buildings/widgets/building_card.dart';
-import 'package:app/Presentation/widgets/error1.dart';
-import 'package:app/Presentation/widgets/empty1.dart';
+import 'package:app/presentation/widgets/search_bar.dart';
+import 'package:app/presentation/views/buildings/widgets/building_card.dart';
+import 'package:app/presentation/widgets/error1.dart';
+import 'package:app/presentation/widgets/empty1.dart';
 import 'package:get/get.dart';
-import 'package:app/Presentation/views/buildings/add_building_view.dart';
-import 'package:app/Presentation/views/buildings/building_detail_view.dart';
+import 'package:app/presentation/views/buildings/add_building_view.dart';
+import 'package:app/presentation/views/buildings/building_detail_view.dart';
 import 'package:provider/provider.dart';
 import 'package:panara_dialogs/panara_dialogs.dart';
-import 'package:app/Presentation/provider/auth_viewmodel.dart';
-import 'package:app/Presentation/themes/app_colors.dart';
+import 'package:app/presentation/provider/auth_viewmodel.dart';
+import 'package:app/presentation/themes/app_colors.dart';
 
 class BuildingsView extends StatefulWidget {
   const BuildingsView({super.key});
@@ -81,37 +81,45 @@ class _BuildingsViewState extends State<BuildingsView> {
       context: context,
       showDragHandle: true,
       builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Filters',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      'Filters',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Only buildings with available rooms'),
+                      value: tempOnlyAvailable,
+                      onChanged: (v) {
+                        setModalState(() {
+                          tempOnlyAvailable = v;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    FilledButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        if (mounted) {
+                          setState(() => _onlyAvailable = tempOnlyAvailable);
+                        }
+                      },
+                      child: const Text('Apply'),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Only buildings with available rooms'),
-                  value: tempOnlyAvailable,
-                  onChanged: (v) => setState(() {
-                    tempOnlyAvailable = v;
-                  }),
-                ),
-                const SizedBox(height: 12),
-                FilledButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    setState(() => _onlyAvailable = tempOnlyAvailable);
-                  },
-                  child: const Text('Apply'),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -134,6 +142,11 @@ class _BuildingsViewState extends State<BuildingsView> {
   @override
   Widget build(BuildContext context) {
     final canGoBack = Navigator.of(context).canPop();
+    // Reserve extra scroll space at the bottom so the floating/bottom nav
+    // doesn't cover the last card. This keeps the nav overlaying content
+    // while allowing users to scroll the final item fully into view.
+    final bottomSafe = MediaQuery.of(context).padding.bottom;
+    final extraScrollPadding = kBottomNavigationBarHeight + bottomSafe ;
     return PopScope(
       canPop: canGoBack,
       onPopInvokedWithResult: (didPop, result) {
@@ -142,10 +155,10 @@ class _BuildingsViewState extends State<BuildingsView> {
         Get.offAllNamed('/home');
       },
       child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: const Color(0xFFF8F8F8),
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          backgroundColor: Theme.of(context).colorScheme.surface,
+          backgroundColor: const Color(0xFFFFFFFF),
           scrolledUnderElevation: 0,
           leading: canGoBack
               ? IconButton(
@@ -230,108 +243,117 @@ class _BuildingsViewState extends State<BuildingsView> {
                   ),
                 )
               else
-                SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final building = _filtered[index];
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        BuildingCard(
-                          building: building,
-                          onTap: () {
-                            final id = building.id;
-                            Get.to(() => BuildingDetailView(buildingId: id));
-                          },
-                          onEdit: () async {
-                            final BuildingModel? updated =
-                                await Get.to<BuildingModel>(
-                                  () => AddBuildingView(
-                                    editingBuildingId: building.id,
-                                    editingName: building.name,
-                                    editingAddress: building.address,
-                                    editingImageUrl: building.imageUrl.isEmpty
-                                        ? null
-                                        : building.imageUrl,
-                                    editingFloor: building.floor,
-                                    editingUnit: building.unit,
-                                    initialLandlordId: building.landlord?.id,
-                                  ),
-                                );
-                            if (updated != null && mounted) {
-                              setState(() {
-                                // Replace in _all by id so filters recompute
-                                _all = _all
-                                    .map(
-                                      (b) => b.id == updated.id ? updated : b,
-                                    )
-                                    .toList();
-                              });
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Building updated'),
-                                  ),
-                                );
+                ...[
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final building = _filtered[index];
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          BuildingCard(
+                            building: building,
+                            onTap: () {
+                              final id = building.id;
+                              Get.to(() => BuildingDetailView(buildingId: id));
+                            },
+                            onEdit: () async {
+                              final BuildingModel? updated =
+                                  await Get.to<BuildingModel>(
+                                    () => AddBuildingView(
+                                      editingBuildingId: building.id,
+                                      editingName: building.name,
+                                      editingAddress: building.address,
+                                      editingImageUrl: building.imageUrl.isEmpty
+                                          ? null
+                                          : building.imageUrl,
+                                      editingFloor: building.floor,
+                                      editingUnit: building.unit,
+                                      initialLandlordId: building.landlord?.id,
+                                    ),
+                                  );
+                              if (updated != null && mounted) {
+                                setState(() {
+                                  // Replace in _all by id so filters recompute
+                                  _all = _all
+                                      .map(
+                                        (b) => b.id == updated.id ? updated : b,
+                                      )
+                                      .toList();
+                                });
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Building updated'),
+                                    ),
+                                  );
+                                }
                               }
-                            }
-                          },
-                          onDelete: () async {
-                            final confirm =
-                                await PanaraConfirmDialog.showAnimatedGrow(
-                                  context,
-                                  title: "Delete building?",
-                                  message:
-                                      'Are you sure you want to delete "${building.name}"? This action cannot be undone.',
-                                  confirmButtonText: 'Delete',
-                                  cancelButtonText: 'Cancel',
-                                  onTapConfirm: () =>
-                                      Navigator.of(context).pop(true),
-                                  onTapCancel: () =>
-                                      Navigator.of(context).pop(false),
-                                  panaraDialogType: PanaraDialogType.error,
-                                  barrierDismissible: true,
-                                );
-                            if (confirm != true) return;
+                            },
+                            onDelete: () async {
+                              final confirm =
+                                  await PanaraConfirmDialog.showAnimatedGrow(
+                                    context,
+                                    title: "Delete building?",
+                                    message:
+                                        'Are you sure you want to delete "${building.name}"? This action cannot be undone.',
+                                    confirmButtonText: 'Delete',
+                                    cancelButtonText: 'Cancel',
+                                    onTapConfirm: () =>
+                                        Navigator.of(context).pop(true),
+                                    onTapCancel: () =>
+                                        Navigator.of(context).pop(false),
+                                    panaraDialogType: PanaraDialogType.error,
+                                    barrierDismissible: true,
+                                  );
+                              if (confirm != true) return;
 
-                            // show progress indicator
-                            if (!context.mounted) return;
-                            showDialog(
-                              context: context,
-                              barrierDismissible: false,
-                              builder: (_) => const Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                            );
-                            try {
-                              await _repository.deleteBuilding(building.id);
-                              // remove from local list and refresh UI
-                              setState(() {
-                                _all = _all
-                                    .where((b) => b.id != building.id)
-                                    .toList();
-                              });
+                              // show progress indicator
                               if (!context.mounted) return;
-                              Navigator.of(context).pop(); // close progress
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Building deleted successfully',
-                                  ),
+                              showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (_) => const Center(
+                                  child: CircularProgressIndicator(),
                                 ),
                               );
-                            } catch (e) {
-                              if (!context.mounted) return;
-                              Navigator.of(context).pop(); // close progress
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(e.toString())),
-                              );
-                            }
-                          },
-                        ),
-                      ],
-                    );
-                  }, childCount: _filtered.length),
-                ),
+                              try {
+                                await _repository.deleteBuilding(building.id);
+                                // remove from local list and refresh UI
+                                if (mounted) {
+                                  setState(() {
+                                    _all = _all
+                                        .where((b) => b.id != building.id)
+                                        .toList();
+                                  });
+                                }
+                                if (!context.mounted) return;
+                                Navigator.of(context).pop(); // close progress
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Building deleted successfully',
+                                    ),
+                                  ),
+                                );
+                              } catch (e) {
+                                if (!context.mounted) return;
+                                Navigator.of(context).pop(); // close progress
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(e.toString())),
+                                );
+                              }
+                            },
+                          ),
+                        ],
+                      );
+                    }, childCount: _filtered.length),
+                  ),
+                  // Extra space so the floating/bottom nav doesn't cover
+                  // the last item. Keeps UX consistent across devices.
+                  SliverToBoxAdapter(
+                    child: SizedBox(height: extraScrollPadding),
+                  ),
+                ],
             ],
           ),
         ),

@@ -3,11 +3,10 @@ import 'dart:convert';
 import 'dart:developer' as dev;
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:app/data/endpoint/endpoints.dart';
 
 class AuthService {
-  late final String _baseUrl = _normalizeBaseUrl(dotenv.env['BASE_URL'] ?? '');
 
   // Persisted auth token (secure)
   static const _tokenKey = 'auth_token';
@@ -16,13 +15,27 @@ class AuthService {
 
   // Public API --------------------------------------------------------------
   Future<Map<String, dynamic>> register(Map<String, dynamic> data) async =>
-      _postJson('/api/register', data, fallbackError: 'Registration failed');
+    _postJson(Endpoints.register, data, fallbackError: 'Registration failed');
 
   Future<Map<String, dynamic>> login(Map<String, dynamic> data) async =>
-      _postJson('/api/login', data, fallbackError: 'Login failed');
+    _postJson(Endpoints.login, data, fallbackError: 'Login failed');
 
   Future<void> logout() => _clearToken();
-  Future<String?> getToken() => _storage.read(key: _tokenKey);
+  /// Read token from secure storage with a short timeout and safe error handling.
+  ///
+  /// Rapid UI interactions (many concurrent requests/navigation) can surface
+  /// platform-channel races or delays; we defend by timing out and returning
+  /// null so callers treat the user as logged out rather than hanging the app.
+  Future<String?> getToken() async {
+    try {
+      // Use a small timeout to avoid long stalls caused by platform channel delays
+      return await _storage.read(key: _tokenKey).timeout(const Duration(seconds: 2));
+    } catch (e, st) {
+      dev.log('AuthService.getToken failed: $e', error: e, stackTrace: st);
+      return null;
+    }
+  }
+
   Future<bool> isLoggedIn() async => (await getToken())?.isNotEmpty == true;
 
   // Landlord ID helpers
@@ -38,71 +51,108 @@ class AuthService {
   }
 
   // Core HTTP helper -------------------------------------------------------
+  // Limit concurrent outgoing HTTP requests to avoid overwhelming the
+  // platform channel / backend when the UI fires many quick taps.
+  final int _maxConcurrentRequests = 4;
+  int _activeRequests = 0;
+  final List<Completer<void>> _requestQueue = [];
+
+  Future<void> _acquireRequestSlot() async {
+    if (_activeRequests < _maxConcurrentRequests) {
+      _activeRequests++;
+      return;
+    }
+    final c = Completer<void>();
+    _requestQueue.add(c);
+    await c.future;
+    // when resumed, we've been counted in release
+    return;
+  }
+
+  void _releaseRequestSlot() {
+    _activeRequests = (_activeRequests - 1).clamp(0, _maxConcurrentRequests);
+    if (_requestQueue.isNotEmpty) {
+      final next = _requestQueue.removeAt(0);
+      // increment activeRequests for the waiter before completing so it can proceed
+      _activeRequests++;
+      next.complete();
+    }
+  }
+
   Future<Map<String, dynamic>> _postJson(
     String path,
     Map<String, dynamic> data, {
     required String fallbackError,
   }) async {
-    final uri = Uri.parse('$_baseUrl$path');
-
-    // Attach token if present
-    final headers = <String, String>{'Content-Type': 'application/json'};
-    final existingToken = await getToken();
-    if (existingToken != null && existingToken.isNotEmpty) {
-      headers['Authorization'] = 'Bearer $existingToken';
-    }
-
-    // Redact sensitive values from logs
-    dev.log('[HTTP] POST $uri body=${jsonEncode(_redact(data))}');
-    http.Response response;
+  final uri = Endpoints.uri(path);
+    await _acquireRequestSlot();
     try {
-      response = await http
-          .post(
-            uri,
-            headers: headers,
-            body: jsonEncode(data),
-          )
-          .timeout(const Duration(seconds: 20));
-    } on TimeoutException {
-      throw Exception('Request timeout – please try again');
-    } on SocketException {
-      throw Exception('No internet connection');
-    } on HttpException {
-      throw Exception('HTTP error communicating with server');
-    } on FormatException {
-      throw Exception('Bad response format from server');
-    }
-
-    final status = response.statusCode;
-    final bodyStr = response.body.trim();
-    dev.log('[HTTP] <- $status ${bodyStr.isEmpty ? '<empty body>' : bodyStr}');
-
-    dynamic decoded;
-    if (bodyStr.isEmpty) {
-      decoded = <String, dynamic>{};
-    } else {
-      decoded = _tryDecodeJson(bodyStr);
-    }
-
-    if (status >= 200 && status < 300) {
-      if (decoded is Map<String, dynamic>) {
-        // Auto-persist token if present
-        final newToken = _extractToken(decoded);
-        if (newToken != null && newToken.isNotEmpty) {
-          await _saveToken(newToken);
+      // Attach token if present. Protect against storage read failures by
+      // treating a read failure as missing token (no Authorization header).
+      final headers = <String, String>{'Content-Type': 'application/json'};
+      try {
+        final existingToken = await getToken();
+        if (existingToken != null && existingToken.isNotEmpty) {
+          headers['Authorization'] = 'Bearer $existingToken';
         }
-        // Auto-persist landlord_id if present
-        final landlordId = _extractLandlordId(decoded);
-        if (landlordId != null) {
-          await setLandlordId(landlordId);
-        }
-        return decoded;
+      } catch (e, st) {
+        dev.log('Failed to obtain token for request: $e', error: e, stackTrace: st);
       }
-      return {'raw': decoded};
-    }
 
-    final message = _extractMessage(decoded, fallbackError);
-    throw Exception(message);
+      // Redact sensitive values from logs
+      dev.log('[HTTP] POST $uri body=${jsonEncode(_redact(data))}');
+      http.Response response;
+      try {
+        response = await http
+            .post(
+              uri,
+              headers: headers,
+              body: jsonEncode(data),
+            )
+            .timeout(const Duration(seconds: 20));
+      } on TimeoutException {
+        throw Exception('Request timeout – please try again');
+      } on SocketException {
+        throw Exception('No internet connection');
+      } on HttpException {
+        throw Exception('HTTP error communicating with server');
+      } on FormatException {
+        throw Exception('Bad response format from server');
+      }
+
+      final status = response.statusCode;
+      final bodyStr = response.body.trim();
+      dev.log('[HTTP] <- $status ${bodyStr.isEmpty ? '<empty body>' : bodyStr}');
+
+      dynamic decoded;
+      if (bodyStr.isEmpty) {
+        decoded = <String, dynamic>{};
+      } else {
+        decoded = _tryDecodeJson(bodyStr);
+      }
+
+      if (status >= 200 && status < 300) {
+        if (decoded is Map<String, dynamic>) {
+          // Auto-persist token if present
+          final newToken = _extractToken(decoded);
+          if (newToken != null && newToken.isNotEmpty) {
+            await _saveToken(newToken);
+          }
+          // Auto-persist landlord_id if present
+          final landlordId = _extractLandlordId(decoded);
+          if (landlordId != null) {
+            await setLandlordId(landlordId);
+          }
+          return decoded;
+        }
+        return {'raw': decoded};
+      }
+
+      final message = _extractMessage(decoded, fallbackError);
+      throw Exception(message);
+    } finally {
+      _releaseRequestSlot();
+    }
   }
 
   // Helpers ----------------------------------------------------------------
@@ -191,8 +241,12 @@ class AuthService {
 
   Future<void> _saveToken(String token) => _storage.write(key: _tokenKey, value: token);
   Future<void> _clearToken() async {
-    await _storage.delete(key: _tokenKey);
-    await _storage.delete(key: _landlordIdKey);
+    try {
+      await _storage.delete(key: _tokenKey);
+      await _storage.delete(key: _landlordIdKey);
+    } catch (e, st) {
+      dev.log('Failed to clear secure storage: $e', error: e, stackTrace: st);
+    }
   }
 
   Map<String, dynamic> _redact(Map<String, dynamic> data) {
@@ -201,17 +255,5 @@ class AuthService {
       if (copy.containsKey(k)) copy[k] = '***';
     }
     return copy;
-  }
-
-  String _normalizeBaseUrl(String input) {
-    var url = input.trim();
-    if (url.isEmpty) {
-      throw Exception('BASE_URL is not set. Add BASE_URL to your .env');
-    }
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'https://$url';
-    }
-    if (url.endsWith('/')) url = url.substring(0, url.length - 1);
-    return url;
   }
 }

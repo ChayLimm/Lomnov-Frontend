@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:app/domain/models/building_model.dart';
-import 'package:app/Presentation/themes/app_colors.dart';
+import 'package:app/domain/models/building_model/building_model.dart';
+import 'package:app/presentation/themes/app_colors.dart';
 
 class BuildingCard extends StatelessWidget {
   final BuildingModel building;
@@ -17,6 +17,7 @@ class BuildingCard extends StatelessWidget {
     final occupied = b.rooms.where((r) => r.status.toLowerCase() == 'occupied').length;
     final theme = Theme.of(context);
     return Material(
+
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
@@ -33,7 +34,7 @@ class BuildingCard extends StatelessWidget {
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          color: theme.colorScheme.surface,
+          color: const Color(0xFFF8F8F8),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -141,14 +142,15 @@ class BuildingCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
                       children: [
                         _Pill(
                           label: '$available available room',
                           outlined: true,
                           color: AppColors.primaryColor,
                         ),
-                        const SizedBox(width: 8),
                         _Pill(
                           label: '$occupied occupied',
                           outlined: false,

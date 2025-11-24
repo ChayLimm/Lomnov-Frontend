@@ -1,13 +1,22 @@
+import 'package:app/presentation/themes/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:provider/provider.dart';
+import 'package:app/presentation/provider/auth_viewmodel.dart';
 
 class SettingsView extends StatelessWidget {
   const SettingsView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: AppColors.backgroundColor,
+      appBar: AppBar(
+        backgroundColor: AppColors.backgroundColor,
+        foregroundColor: AppColors.textPrimary,
+        title: const Text('Settings'),
+        elevation: 0,
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -18,7 +27,7 @@ class SettingsView extends StatelessWidget {
               prefixIcon: const Icon(Icons.search),
               isDense: true,
               filled: true,
-              fillColor: theme.colorScheme.surface,
+              fillColor: AppColors.surfaceColor,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -28,9 +37,9 @@ class SettingsView extends StatelessWidget {
           const SizedBox(height: 16),
           _Section(
             title: 'Account Settings',
-            children: const [
-              _Tile(icon: Icons.person_outline, label: 'Profile'),
-              _Tile(icon: Icons.lock_outline, label: 'Password & Security'),
+            children: [
+              _Tile(icon: Icons.person_outline, label: 'Profile', onTap: () => Get.toNamed('/edit-profile')),
+              const _Tile(icon: Icons.lock_outline, label: 'Password & Security'),
             ],
           ),
           const SizedBox(height: 12),
@@ -49,6 +58,8 @@ class SettingsView extends StatelessWidget {
               _Tile(icon: Icons.support_agent_outlined, label: 'Contact Us'),
             ],
           ),
+          const SizedBox(height: 20),
+          _LogoutButton(),
         ],
       ),
     );
@@ -62,11 +73,11 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: AppColors.surfaceColor,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.dividerColor.withOpacity(0.6), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,14 +86,14 @@ class _Section extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
             child: Text(
               title,
-              style: theme.textTheme.bodySmall?.copyWith(
-                // ignore: deprecated_member_use
-                color: theme.textTheme.bodySmall?.color?.withOpacity(0.8),
+              style: const TextStyle(
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
               ),
             ),
           ),
-          const Divider(height: 1),
+          Divider(height: 1, color: AppColors.dividerColor.withOpacity(0.7)),
           ...children,
         ],
       ),
@@ -93,15 +104,56 @@ class _Section extends StatelessWidget {
 class _Tile extends StatelessWidget {
   final IconData icon;
   final String label;
-  const _Tile({required this.icon, required this.label});
+  final VoidCallback? onTap;
+  const _Tile({required this.icon, required this.label, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(label),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: () {},
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            Icon(icon, color: AppColors.primaryColor, size: 22),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, fontWeight: FontWeight.w500),
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LogoutButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        icon: const Icon(Icons.logout, size: 18),
+        label: const Text('Log out'),
+        onPressed: () {
+          // Call auth logout if available then navigate to login
+          final auth = context.read<AuthViewModel>();
+          auth.logout();
+          Get.offAllNamed('/');
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.errorColor,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
     );
   }
 }

@@ -7,7 +7,8 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       primaryColor: AppColors.primaryColor,
-      scaffoldBackgroundColor: AppColors.backgroundColor,
+      // Transparent to let our global background image show through
+      scaffoldBackgroundColor: Colors.transparent,
       textTheme: LomTextStyles.textTheme.apply(
         bodyColor: AppColors.textPrimary,
         displayColor: AppColors.textPrimary,
@@ -82,7 +83,8 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       primaryColor: AppColors.primaryColor,
-      scaffoldBackgroundColor: AppColors.darkBackground,
+      // Transparent for dark as well; content cards control their own backgrounds
+      scaffoldBackgroundColor: Colors.transparent,
       textTheme: LomTextStyles.textTheme.apply(
         bodyColor: AppColors.darkTextPrimary,
         displayColor: AppColors.darkTextPrimary,

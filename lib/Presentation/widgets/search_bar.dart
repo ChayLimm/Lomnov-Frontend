@@ -24,7 +24,7 @@ class SearchBarWithFilter extends StatelessWidget {
       padding: padding ?? EdgeInsets.zero,
       child: Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(

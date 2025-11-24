@@ -1,4 +1,4 @@
-import 'package:app/domain/models/user_model.dart';
+import 'package:app/domain/models/user_model/user_model.dart';
 
 /// Abstract repository interface for authentication operations.
 /// 

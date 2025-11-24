@@ -1,4 +1,4 @@
-import 'package:app/domain/models/building_model.dart';
+import 'package:app/domain/models/building_model/building_model.dart';
 
 /// Abstract repository interface for building operations.
 ///

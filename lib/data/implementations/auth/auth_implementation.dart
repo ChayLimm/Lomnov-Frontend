@@ -1,5 +1,5 @@
-import 'package:app/data/services/auth_service.dart';
-import 'package:app/domain/models/user_model.dart';
+import 'package:app/data/services/auth_service/auth_service.dart';
+import 'package:app/domain/models/user_model/user_model.dart';
 import 'package:app/domain/repositories/auth_repository.dart';
 
 /// Implementation of [AuthRepository] using [AuthService].

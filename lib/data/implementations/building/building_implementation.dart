@@ -1,6 +1,6 @@
-import 'package:app/data/services/buildings/fetch_service.dart';
-import 'package:app/data/services/buildings/mutation_service.dart';
-import 'package:app/domain/models/building_model.dart';
+import 'package:app/data/services/buildings_service/fetch_service.dart';
+import 'package:app/data/services/buildings_service/mutation_service.dart';
+import 'package:app/domain/models/building_model/building_model.dart';
 import 'package:app/domain/repositories/building_repository.dart';
 
 /// Implementation of [BuildingRepository] using building services.
@@ -13,14 +13,16 @@ class BuildingRepositoryImpl implements BuildingRepository {
 
   @override
   Future<List<BuildingModel>> fetchBuildings({int? landlordId}) async {
-    return await _fetchService.fetchBuildingsForLandlord(
+    final dtos = await _fetchService.fetchBuildingsForLandlord(
       landlordId: landlordId,
     );
+    return dtos.map((e) => e.toDomain()).toList();
   }
 
   @override
   Future<BuildingModel> fetchBuildingById(int id) async {
-    return await _fetchService.fetchBuildingById(id);
+    final dto = await _fetchService.fetchBuildingById(id);
+    return dto.toDomain();
   }
 
   @override
@@ -32,7 +34,7 @@ class BuildingRepositoryImpl implements BuildingRepository {
     required int floor,
     required int unit,
   }) async {
-    return await _mutationService.createBuilding(
+    final dto = await _mutationService.createBuilding(
       landlordId: landlordId,
       name: name,
       address: address,
@@ -40,6 +42,7 @@ class BuildingRepositoryImpl implements BuildingRepository {
       floor: floor,
       unit: unit,
     );
+    return dto.toDomain();
   }
 
   @override
@@ -52,7 +55,7 @@ class BuildingRepositoryImpl implements BuildingRepository {
     int? floor,
     int? unit,
   }) async {
-    return await _mutationService.updateBuilding(
+    final dto = await _mutationService.updateBuilding(
       id: id,
       landlordId: landlordId,
       name: name,
@@ -61,6 +64,7 @@ class BuildingRepositoryImpl implements BuildingRepository {
       floor: floor,
       unit: unit,
     );
+    return dto.toDomain();
   }
 
   @override

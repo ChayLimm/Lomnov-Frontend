@@ -1,10 +1,16 @@
 import 'package:app/data/implementations/building/building_implementation.dart';
+import 'package:app/presentation/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
-import 'package:app/Presentation/provider/auth_viewmodel.dart';
+import 'package:app/presentation/provider/auth_viewmodel.dart';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
+import 'package:app/data/endpoint/endpoints.dart';
+import 'package:app/data/services/auth_service/auth_service.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:app/presentation/widgets/gradient_button.dart';
 
 class AddBuildingView extends StatefulWidget {
   final int? initialLandlordId;
@@ -38,8 +44,8 @@ class _AddBuildingViewState extends State<AddBuildingView> {
   final _nameCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
   final _imageUrlCtrl = TextEditingController();
-  final _floorCtrl = TextEditingController(text: '4');
-  final _unitCtrl = TextEditingController(text: '20');
+  final _floorCtrl = TextEditingController(text: '1');
+  final _unitCtrl = TextEditingController(text: '1');
   final _repository = BuildingRepositoryImpl();
 
   bool _submitting = false;
@@ -142,8 +148,9 @@ class _AddBuildingViewState extends State<AddBuildingView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
+        backgroundColor: AppColors.backgroundColor,
         title: Text(widget.editingBuildingId != null ? 'Edit building' : 'Add new building'),
       ),
       body: SafeArea(
@@ -158,6 +165,7 @@ class _AddBuildingViewState extends State<AddBuildingView> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Card(
+                        color: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         child: Padding(
                           padding: const EdgeInsets.all(16),
@@ -239,16 +247,14 @@ class _AddBuildingViewState extends State<AddBuildingView> {
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                   child: SizedBox(
                     width: double.infinity,
-                    height: 44,
-                    child: FilledButton(
+                    child: GradientButton(
+                      label: _submitting
+                          ? 'Please wait…'
+                          : (widget.editingBuildingId != null ? 'Update' : 'Save'),
+                      loading: _submitting,
                       onPressed: _submitting ? null : _submit,
-                      child: _submitting
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Text('Save'),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      borderRadius: 12,
                     ),
                   ),
                 ),
@@ -330,6 +336,9 @@ class _ImagePickerPlaceholder extends StatefulWidget {
 class _ImagePickerPlaceholderState extends State<_ImagePickerPlaceholder> {
   Uint8List? _previewBytes;
   String? _fileName;
+  bool _uploading = false;
+
+  final _auth = AuthService();
 
   Future<void> _pickFile() async {
     final result = await FilePicker.platform.pickFiles(
@@ -343,9 +352,86 @@ class _ImagePickerPlaceholderState extends State<_ImagePickerPlaceholder> {
       _previewBytes = file.bytes;
       _fileName = file.name;
     });
-    // For now, store file name in controller. If your backend expects upload,
-    // you would instead upload the bytes and set the returned URL here.
-    widget.controller.text = _fileName ?? '';
+    // Upload the bytes to the backend and store the returned URL
+    if (file.bytes != null && file.bytes!.isNotEmpty) {
+      await _uploadToServer(file.bytes!, file.name);
+    }
+  }
+
+  Future<void> _uploadToServer(Uint8List bytes, String filename) async {
+    setState(() => _uploading = true);
+    try {
+      final uri = Endpoints.uri(Endpoints.buildingPicturesUpload);
+      final req = http.MultipartRequest('POST', uri);
+      // Attach auth header if present and common headers
+      final token = await _auth.getToken();
+      if (token != null && token.isNotEmpty) {
+        req.headers['Authorization'] = 'Bearer $token';
+      }
+      req.headers['Accept'] = 'application/json';
+      req.headers['ngrok-skip-browser-warning'] = 'true';
+
+      // Field name commonly used by backends: "image"
+      req.files.add(http.MultipartFile.fromBytes(
+        'image',
+        bytes,
+        filename: filename,
+      ));
+
+      final streamed = await req.send();
+      final resp = await http.Response.fromStream(streamed);
+
+      if (resp.statusCode >= 200 && resp.statusCode < 300) {
+        final url = _extractUrl(resp.body);
+        if (url != null && url.isNotEmpty) {
+          widget.controller.text = url;
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Image uploaded')),
+            );
+          }
+        } else {
+          throw Exception('Upload succeeded but no URL returned');
+        }
+      } else {
+        throw Exception('Upload failed (${resp.statusCode})');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  String? _extractUrl(String body) {
+    // Try parse a few common response shapes
+    try {
+      final dynamic decoded = body.isEmpty ? null : jsonDecode(body);
+      if (decoded is Map<String, dynamic>) {
+        final m = decoded;
+        String? pick(Map<String, dynamic> x) {
+          final candidates = ['url', 'image_url', 'imageUrl', 'path'];
+          for (final k in candidates) {
+            final v = x[k];
+            if (v is String && v.isNotEmpty) return v;
+          }
+          return null;
+        }
+        final direct = pick(m);
+        if (direct != null) return direct;
+        if (m['data'] is Map<String, dynamic>) {
+          final d = m['data'] as Map<String, dynamic>;
+          final inner = pick(d);
+          if (inner != null) return inner;
+        }
+      } else if (decoded is String && decoded.startsWith('http')) {
+        return decoded;
+      }
+    } catch (_) {}
+    return null;
   }
 
   @override
@@ -356,35 +442,55 @@ class _ImagePickerPlaceholderState extends State<_ImagePickerPlaceholder> {
         Container(
           height: 120,
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
+            color: AppColors.backgroundColor,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Theme.of(context).dividerColor, style: BorderStyle.solid),
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
             onTap: _pickFile,
-            child: Center(
-              child: _previewBytes == null
-                  ? Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.image_outlined, color: Colors.grey.shade600),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Tap to upload image',
-                          style: TextStyle(color: Colors.grey.shade600),
+            child: Stack(
+              children: [
+                Center(
+                  child: _previewBytes == null
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.image_outlined, color: Colors.grey.shade600),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Tap to upload image',
+                              style: TextStyle(color: Colors.grey.shade600),
+                            ),
+                          ],
+                        )
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.memory(
+                            _previewBytes!,
+                            width: double.infinity,
+                            height: 120,
+                            fit: BoxFit.cover,
+                          ),
                         ),
-                      ],
-                    )
-                  : ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.memory(
-                        _previewBytes!,
-                        width: double.infinity,
-                        height: 120,
-                        fit: BoxFit.cover,
+                ),
+                if (_uploading)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.35),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        ),
                       ),
                     ),
+                  ),
+              ],
             ),
           ),
         ),
