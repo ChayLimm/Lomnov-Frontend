@@ -1,0 +1,310 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'dart:developer' as dev;
+import 'package:app/presentation/themes/app_colors.dart';
+import 'package:app/presentation/views/buildings/edit_room_view.dart';
+
+// A detail view for a single room. Accepts either a domain model or raw Map.
+class RoomDetailView extends StatelessWidget {
+  final dynamic room; // RoomModel or Map<String, dynamic>
+  const RoomDetailView({super.key, required this.room});
+
+  String _safeString(dynamic v) => v == null ? '' : v.toString();
+
+  double? _safeDouble(dynamic v) {
+    if (v == null) return null;
+    if (v is num) return v.toDouble();
+    return double.tryParse(v.toString());
+  }
+
+  Map<String, dynamic>? _buildingMap() {
+    if (room is Map<String, dynamic>) return (room['building'] is Map) ? Map<String, dynamic>.from(room['building']) : null;
+    try {
+      final b = room.building;
+      if (b == null) return null;
+      return {
+        'id': b.id,
+        'name': b.name,
+        'address': b.address,
+        'image_url': b.imageUrl,
+        'floor': b.floor,
+        'unit': b.unit,
+      };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Map<String, dynamic>? _currentContractMap() {
+    if (room is Map<String, dynamic>) return (room['current_contract'] is Map) ? Map<String, dynamic>.from(room['current_contract']) : null;
+    try {
+      final c = room.currentContract;
+      if (c == null) return null;
+      return {
+        'id': c.id,
+        'identify_id': c.identifyId ?? c.identify_id ?? '',
+        'name': c.name ?? '',
+        'phone': c.phone ?? '',
+        'move_in_date': c.moveInDate ?? c.move_in_date ?? '',
+        'monthly': c.monthly ?? c.monthly_price ?? null,
+        'payment_status': c.paymentStatus ?? c.payment_status ?? '',
+      };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isMap = room is Map<String, dynamic>;
+    final roomNumber = isMap
+        ? _safeString(room['room_number'] ?? room['roomNumber'] ?? room['name'])
+        : _safeString(room.roomNumber ?? room.name);
+    final floor = isMap ? _safeString(room['floor']) : _safeString(room.floor);
+    final barcode = isMap ? _safeString(room['barcode']) : _safeString(room.barcode);
+    final status = isMap ? _safeString(room['status']) : _safeString(room.status);
+    final priceVal = isMap ? _safeDouble(room['price']) : _safeDouble(room.price);
+
+    final building = _buildingMap();
+    final currentContract = _currentContractMap();
+
+    final headerImage = building != null ? (building['image_url'] ?? '') as String : '';
+    final buildingName = building != null ? (building['name'] ?? '') as String : '';
+
+    String paymentStatusLabel() {
+      if (currentContract == null) return 'Unpaid';
+      final ps = (currentContract['payment_status'] ?? '').toString().toLowerCase();
+      if (ps.contains('paid')) return 'Paid';
+      if (ps.contains('pending')) return 'Pending';
+      if (ps.contains('unpaid')) return 'Unpaid';
+      return 'Unpaid';
+    }
+
+    final statusLabel = (status.isNotEmpty ? status : 'Available').toLowerCase();
+
+    Widget _imgPlaceholder() => Container(
+          color: Colors.grey.shade300,
+          child: const Center(child: Icon(Icons.image_not_supported_outlined)),
+        );
+
+    Widget _buildPaymentPill(String label) {
+      final l = label.toLowerCase();
+      Color bg;
+      Color text;
+      switch (l) {
+        case 'paid':
+          bg = const Color(0xFFE3F7E9);
+          text = const Color(0xFF2E7D32);
+          break;
+        case 'pending':
+          bg = const Color(0xFFFFF4E5);
+          text = const Color(0xFFEF6C00);
+          break;
+        case 'unpaid':
+        default:
+          bg = const Color(0xFFFDECEA);
+          text = const Color(0xFFB71C1C);
+          break;
+      }
+
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
+        child: Text(label, style: TextStyle(color: text, fontWeight: FontWeight.w600)),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F8F8),
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
+          SizedBox(
+            height: 230,
+            width: double.infinity,
+            child: headerImage.isNotEmpty
+                ? Image.network(headerImage, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _imgPlaceholder())
+                : _imgPlaceholder(),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: IconButton(
+                  style: IconButton.styleFrom(backgroundColor: const Color.fromRGBO(0, 0, 0, 0.35)),
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Get.back(),
+                ),
+              ),
+            ),
+          ),
+          Positioned.fill(
+            top: 230 - 20,
+            child: Material(
+              color: Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              clipBehavior: Clip.antiAlias,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            roomNumber,
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: statusLabel.contains('available') ? const Color(0xFFE3F2FD) : const Color(0xFFE3F7E9),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                statusLabel[0].toUpperCase() + statusLabel.substring(1),
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: statusLabel.contains('available') ? const Color(0xFF0D47A1) : const Color(0xFF2E7D32),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            // small edit icon beside the status
+                            InkWell(
+                              onTap: () => Get.to(() => EditRoomView(room: room)),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(Icons.edit, size: 16, color: Colors.grey.shade800),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  
+                    Row(
+                      children: [
+                        
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(buildingName),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Floor ${floor.isNotEmpty ? floor : (building != null && building['floor'] != null ? building['floor'].toString() : '-')}',
+                                style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text('Room Facility', style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      children: const [
+                        Chip(label: Text('Pool')), 
+                        Chip(label: Text('AC')),
+                        Chip(label: Text('WiFi')),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    Text('Rental Information', style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    // Improved layout: left label, right column with pill above monthly amount.
+                    // Two-column layout: left is the label, right column contains payment pill above monthly amount (right-aligned)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Left column: Payment label on top, Monthly label below
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Payment Status :', style: TextStyle(color: Colors.grey)),
+                              const SizedBox(height: 12),
+                              const Text('Monthly :', style: TextStyle(color: Colors.grey)),
+                            ],
+                          ),
+                        ),
+
+                        // Right column: pill on top, amount below (kept right-aligned)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildPaymentPill(paymentStatusLabel()),
+                            const SizedBox(height: 12),
+                            Text(
+                              priceVal != null ? '\$${priceVal.toStringAsFixed(0)}' : '-',
+                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    Text('Tenant Information', style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    if (currentContract == null)
+                      const Text('No tenant')
+                    else ...[
+                      _buildTenantRow('Identify ID', currentContract['identify_id'] ?? ''),
+                      _buildTenantRow('Name', currentContract['name'] ?? ''),
+                      _buildTenantRow('Phone Number', currentContract['phone'] ?? ''),
+                      _buildTenantRow('Move In date', currentContract['move_in_date'] ?? ''),
+                    ],
+                    const Spacer(),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(backgroundColor: AppColors.primaryColor),
+                        onPressed: () {
+                          Get.snackbar('Contract', 'Open contract view');
+                        },
+                        icon: const Icon(Icons.receipt_long),
+                        label: const Text('Contract'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTenantRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6.0),
+      child: Row(
+        children: [
+          Expanded(child: Text(label, style: TextStyle(color: Colors.grey.shade700))),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(value, textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+}
