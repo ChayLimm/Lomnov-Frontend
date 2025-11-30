@@ -1,11 +1,11 @@
-import 'package:app/presentation/themes/app_colors.dart';
+import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:app/presentation/views/buildings/buildings_view.dart';
-import 'package:app/presentation/views/settings/settings_view.dart';
-import 'package:app/presentation/views/reports/report_view.dart';
-import 'package:app/presentation/views/home/home_parts/home_tab.dart';
-import 'package:app/presentation/views/home/nav_bar.dart';
+import 'package:app/Presentation/views/buildings/buildings_view.dart';
+import 'package:app/Presentation/views/settings/settings_view.dart';
+import 'package:app/Presentation/views/reports/report_view.dart';
+import 'package:app/Presentation/views/home/home_parts/home_tab.dart';
+import 'package:app/Presentation/views/home/nav_bar.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});

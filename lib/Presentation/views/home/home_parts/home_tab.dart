@@ -1,9 +1,9 @@
-import 'package:app/presentation/provider/auth_viewmodel.dart';
-import 'package:app/presentation/views/home/home_parts/status_card.dart';
-import 'package:app/presentation/views/home/home_parts/quick_actions_grid.dart';
-import 'package:app/presentation/views/home/home_parts/receipts_section.dart';
-import 'package:app/presentation/views/home/home_parts/overview_card.dart';
-import 'package:app/presentation/themes/app_colors.dart';
+import 'package:app/Presentation/provider/auth_viewmodel.dart';
+import 'package:app/Presentation/views/home/home_parts/status_card.dart';
+import 'package:app/Presentation/views/home/home_parts/quick_actions_grid.dart';
+import 'package:app/Presentation/views/home/home_parts/receipts_section.dart';
+import 'package:app/Presentation/views/home/home_parts/overview_card.dart';
+import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:app/domain/models/home_model/dashboard_summary.dart';
 import 'package:app/domain/models/home_model/invoice_status.dart';

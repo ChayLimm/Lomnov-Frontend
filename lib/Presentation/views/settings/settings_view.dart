@@ -1,8 +1,9 @@
-import 'package:app/presentation/themes/app_colors.dart';
+import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
-import 'package:app/presentation/provider/auth_viewmodel.dart';
+import 'package:app/Presentation/provider/auth_viewmodel.dart';
+import 'package:app/Presentation/views/settings/service_view.dart';
 
 class SettingsView extends StatelessWidget {
   const SettingsView({super.key});
@@ -45,10 +46,10 @@ class SettingsView extends StatelessWidget {
           const SizedBox(height: 12),
           _Section(
             title: 'System Settings',
-            children: const [
-              _Tile(icon: Icons.lightbulb_outline, label: 'Services'),
-              _Tile(icon: Icons.account_balance_wallet_outlined, label: 'Account Bakong'),
-              _Tile(icon: Icons.rule_folder_outlined, label: 'Rules'),
+            children: [
+              _Tile(icon: Icons.lightbulb_outline, label: 'Services', onTap: () => Get.to(() => const ServiceView())),
+              const _Tile(icon: Icons.account_balance_wallet_outlined, label: 'Account Bakong'),
+              const _Tile(icon: Icons.rule_folder_outlined, label: 'Rules'),
             ],
           ),
           const SizedBox(height: 12),

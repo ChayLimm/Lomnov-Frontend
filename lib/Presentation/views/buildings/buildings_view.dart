@@ -1,17 +1,17 @@
 import 'package:app/domain/models/building_model/building_model.dart';
 import 'package:app/data/implementations/building/building_implementation.dart';
 import 'package:flutter/material.dart';
-import 'package:app/presentation/widgets/search_bar.dart';
-import 'package:app/presentation/views/buildings/widgets/building_card.dart';
-import 'package:app/presentation/widgets/error1.dart';
-import 'package:app/presentation/widgets/empty1.dart';
+import 'package:app/Presentation/widgets/search_bar.dart';
+import 'package:app/Presentation/views/buildings/widgets/building_card.dart';
+import 'package:app/Presentation/widgets/error1.dart';
+import 'package:app/Presentation/widgets/empty1.dart';
 import 'package:get/get.dart';
-import 'package:app/presentation/views/buildings/add_building_view.dart';
-import 'package:app/presentation/views/buildings/building_detail_view.dart';
+import 'package:app/Presentation/views/buildings/add_building_view.dart';
+import 'package:app/Presentation/views/buildings/building_detail_view.dart';
 import 'package:provider/provider.dart';
 import 'package:panara_dialogs/panara_dialogs.dart';
-import 'package:app/presentation/provider/auth_viewmodel.dart';
-import 'package:app/presentation/themes/app_colors.dart';
+import 'package:app/Presentation/provider/auth_viewmodel.dart';
+import 'package:app/Presentation/themes/app_colors.dart';
 
 class BuildingsView extends StatefulWidget {
   const BuildingsView({super.key});

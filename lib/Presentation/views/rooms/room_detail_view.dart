@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:app/presentation/themes/app_colors.dart';
-import 'package:app/presentation/views/buildings/edit_room_view.dart';
+import 'package:app/Presentation/themes/app_colors.dart';
+import 'package:app/Presentation/views/buildings/edit_room_view.dart';
 
 // A detail view for a single room. Accepts either a domain model or raw Map.
 class RoomDetailView extends StatelessWidget {
   final dynamic room; // RoomModel or Map<String, dynamic>
-  const RoomDetailView({super.key, required this.room});
+  final int? roomId;
+
+  // `room` or `roomId` may be provided. If neither is provided the view will
+  // attempt to read `Get.arguments` or `Get.parameters` (for named routes).
+  const RoomDetailView({super.key, this.room, this.roomId});
 
   String _safeString(dynamic v) => v == null ? '' : v.toString();
 
@@ -55,13 +59,20 @@ class RoomDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMap = room is Map<String, dynamic>;
+    // Determine the effective room object: prefer constructor `room`, then
+    // `Get.arguments`, then attempt to read from route parameters.
+    final dynamic arg = room ?? Get.arguments;
+    final dynamic byParam = Get.parameters.isNotEmpty ? Get.parameters : null;
+
+    final dynamic effectiveRoom = arg ?? (byParam != null && byParam['id'] != null ? {'id': byParam['id']} : null) ?? {};
+
+    final isMap = effectiveRoom is Map<String, dynamic>;
     final roomNumber = isMap
-        ? _safeString(room['room_number'] ?? room['roomNumber'] ?? room['name'])
-        : _safeString(room.roomNumber ?? room.name);
-    final floor = isMap ? _safeString(room['floor']) : _safeString(room.floor);
-    final status = isMap ? _safeString(room['status']) : _safeString(room.status);
-    final priceVal = isMap ? _safeDouble(room['price']) : _safeDouble(room.price);
+      ? _safeString(effectiveRoom['room_number'] ?? effectiveRoom['roomNumber'] ?? effectiveRoom['name'])
+      : _safeString(effectiveRoom.roomNumber ?? effectiveRoom.name);
+    final floor = isMap ? _safeString(effectiveRoom['floor']) : _safeString(effectiveRoom.floor);
+    final status = isMap ? _safeString(effectiveRoom['status']) : _safeString(effectiveRoom.status);
+    final priceVal = isMap ? _safeDouble(effectiveRoom['price']) : _safeDouble(effectiveRoom.price);
 
     final building = _buildingMap();
     final currentContract = _currentContractMap();
@@ -177,7 +188,7 @@ class RoomDetailView extends StatelessWidget {
                             const SizedBox(width: 8),
                             // small edit icon beside the status
                             InkWell(
-                              onTap: () => Get.to(() => EditRoomView(room: room)),
+                              onTap: () => Get.to(() => EditRoomView(room: effectiveRoom)),
                               borderRadius: BorderRadius.circular(8),
                               child: Container(
                                 padding: const EdgeInsets.all(6),

@@ -1,5 +1,5 @@
-import 'package:app/presentation/views/home/home_parts/quick_action_card.dart';
-import 'package:app/presentation/themes/app_colors.dart';
+import 'package:app/Presentation/views/home/home_parts/quick_action_card.dart';
+import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class QuickActionsGrid extends StatelessWidget {

@@ -1,16 +1,16 @@
 import 'package:app/data/implementations/building/building_implementation.dart';
-import 'package:app/presentation/themes/app_colors.dart';
+import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
-import 'package:app/presentation/provider/auth_viewmodel.dart';
+import 'package:app/Presentation/provider/auth_viewmodel.dart';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:app/data/endpoint/endpoints.dart';
 import 'package:app/data/services/auth_service/auth_service.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:app/presentation/widgets/gradient_button.dart';
+import 'package:app/Presentation/widgets/gradient_button.dart';
 
 class AddBuildingView extends StatefulWidget {
   final int? initialLandlordId;

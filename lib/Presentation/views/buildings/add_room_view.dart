@@ -51,8 +51,10 @@ class _AddRoomViewState extends State<AddRoomView> {
       final created = await svc.createRoom(payload);
       dev.log('[Rooms] created room id=${created.id}');
       if (!mounted) return;
-      Get.back(result: true);
-      Get.snackbar('Created', 'Room created');
+      // Navigate to the newly created room's detail page using GetX.
+      // We use the named route `/rooms/:id` and pass the created object as arguments.
+      Get.toNamed('/rooms/${created.id}', arguments: created);
+      Get.snackbar('Created', 'Room created', snackPosition: SnackPosition.BOTTOM);
     } catch (e) {
       dev.log('[Rooms] create failed: $e');
       if (mounted) Get.snackbar('Error', 'Failed to create room: $e');

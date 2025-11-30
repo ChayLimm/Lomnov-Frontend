@@ -1,19 +1,22 @@
-import 'package:app/presentation/provider/auth_viewmodel.dart';
-import 'package:app/presentation/views/auth/login_view.dart';
-import 'package:app/presentation/views/auth/signup_view.dart';
-import 'package:app/presentation/views/home/home_view.dart';
-import 'package:app/presentation/views/notifications/notifications_view.dart';
-import 'package:app/presentation/widgets/app_background.dart';
-import 'package:app/presentation/views/buildings/buildings_view.dart';
+import 'package:app/Presentation/views/rooms/room_detail_view.dart';
+import 'package:app/Presentation/provider/auth_viewmodel.dart';
+import 'package:app/Presentation/views/auth/login_view.dart';
+import 'package:app/Presentation/views/auth/signup_view.dart';
+import 'package:app/Presentation/views/home/home_view.dart';
+import 'package:app/Presentation/views/notifications/notifications_view.dart';
+import 'package:app/Presentation/widgets/app_background.dart';
+import 'package:app/Presentation/views/buildings/buildings_view.dart';
 import 'package:app/data/services/auth_service/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
-import 'package:app/presentation/views/buildings/add_building_view.dart';
-import 'package:app/presentation/views/buildings/building_detail_view.dart';
-import 'package:app/presentation/views/settings/settings_view.dart';
-import 'package:app/presentation/views/settings/edit_profile_view.dart';
+import 'package:app/Presentation/views/buildings/add_building_view.dart';
+import 'package:app/Presentation/views/buildings/add_room_view.dart';
+import 'package:app/Presentation/views/buildings/building_detail_view.dart';
+import 'package:app/Presentation/views/settings/settings_view.dart';
+import 'package:app/Presentation/views/settings/edit_profile_view.dart';
+import 'package:app/Presentation/views/settings/service_view.dart';
 import 'package:app/data/services/mobile_device_identifier.dart';
 
 final DeviceIdService deviceIdService = DeviceIdService();
@@ -61,6 +64,7 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/buildings', page: () => const BuildingsView()),
         GetPage(name: '/notifications', page: () => const NotificationsView()),
         GetPage(name: '/settings', page: () => const SettingsView()),
+        GetPage(name: ServiceView.routeName, page: () => const ServiceView()),
         GetPage(name: '/edit-profile', page: () => const EditProfileView()),
         GetPage(
           name: '/buildings/add',
@@ -73,10 +77,25 @@ class MyApp extends StatelessWidget {
           },
         ),
         GetPage(
+          name: '/rooms/add',
+          page: () {
+            final args = Get.arguments;
+            final buildingId = (args is Map && args['buildingId'] is int) ? args['buildingId'] as int : 0;
+            return AddRoomView(buildingId: buildingId);
+          },
+        ),
+        GetPage(
           name: '/buildings/:id',
           page: () {
             final id = int.tryParse(Get.parameters['id'] ?? '');
             return BuildingDetailView(buildingId: id ?? 0);
+          },
+        ),
+        GetPage(
+          name: '/rooms/:id',
+          page: () {
+            final id = int.tryParse(Get.parameters['id'] ?? '');
+            return RoomDetailView(roomId: id ?? 0);
           },
         ),
       ],

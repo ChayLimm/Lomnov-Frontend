@@ -1,7 +1,7 @@
-import 'package:app/presentation/provider/auth_viewmodel.dart';
-import 'package:app/presentation/themes/app_colors.dart';
-import 'package:app/presentation/themes/text_styles.dart';
-import 'package:app/presentation/widgets/gradient_button.dart';
+import 'package:app/Presentation/provider/auth_viewmodel.dart';
+import 'package:app/Presentation/themes/app_colors.dart';
+import 'package:app/Presentation/themes/text_styles.dart';
+import 'package:app/Presentation/widgets/gradient_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';

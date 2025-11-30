@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:app/presentation/provider/notifications/notification_provider.dart';
-import 'package:app/presentation/widgets/empty1.dart';
-import 'package:app/presentation/widgets/error1.dart';
-import 'package:app/presentation/views/notifications/widgets/notification_list_item.dart';
+import 'package:app/Presentation/provider/notifications/notification_provider.dart';
+import 'package:app/Presentation/widgets/empty1.dart';
+import 'package:app/Presentation/widgets/error1.dart';
+import 'package:app/Presentation/views/notifications/widgets/notification_list_item.dart';
 import 'package:get/get.dart';
-import 'package:app/presentation/themes/text_styles.dart';
-import 'package:app/presentation/themes/app_colors.dart';
+import 'package:app/Presentation/themes/text_styles.dart';
+import 'package:app/Presentation/themes/app_colors.dart';
 
 class NotificationsView extends StatelessWidget {
   const NotificationsView({super.key});

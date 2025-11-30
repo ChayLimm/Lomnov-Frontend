@@ -1,4 +1,4 @@
-import 'package:app/presentation/themes/app_colors.dart';
+import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class QuickActionCard extends StatelessWidget {
