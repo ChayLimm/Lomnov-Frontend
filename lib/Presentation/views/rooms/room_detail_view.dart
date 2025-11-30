@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'dart:developer' as dev;
 import 'package:app/presentation/themes/app_colors.dart';
 import 'package:app/presentation/views/buildings/edit_room_view.dart';
 
@@ -46,7 +45,7 @@ class RoomDetailView extends StatelessWidget {
         'name': c.name ?? '',
         'phone': c.phone ?? '',
         'move_in_date': c.moveInDate ?? c.move_in_date ?? '',
-        'monthly': c.monthly ?? c.monthly_price ?? null,
+        'monthly': c.monthly ?? c.monthly_price,
         'payment_status': c.paymentStatus ?? c.payment_status ?? '',
       };
     } catch (_) {
@@ -61,7 +60,6 @@ class RoomDetailView extends StatelessWidget {
         ? _safeString(room['room_number'] ?? room['roomNumber'] ?? room['name'])
         : _safeString(room.roomNumber ?? room.name);
     final floor = isMap ? _safeString(room['floor']) : _safeString(room.floor);
-    final barcode = isMap ? _safeString(room['barcode']) : _safeString(room.barcode);
     final status = isMap ? _safeString(room['status']) : _safeString(room.status);
     final priceVal = isMap ? _safeDouble(room['price']) : _safeDouble(room.price);
 
@@ -82,12 +80,12 @@ class RoomDetailView extends StatelessWidget {
 
     final statusLabel = (status.isNotEmpty ? status : 'Available').toLowerCase();
 
-    Widget _imgPlaceholder() => Container(
+    Widget imgPlaceholder() => Container(
           color: Colors.grey.shade300,
           child: const Center(child: Icon(Icons.image_not_supported_outlined)),
         );
 
-    Widget _buildPaymentPill(String label) {
+    Widget buildPaymentPill(String label) {
       final l = label.toLowerCase();
       Color bg;
       Color text;
@@ -123,8 +121,8 @@ class RoomDetailView extends StatelessWidget {
             height: 230,
             width: double.infinity,
             child: headerImage.isNotEmpty
-                ? Image.network(headerImage, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _imgPlaceholder())
-                : _imgPlaceholder(),
+                ? Image.network(headerImage, fit: BoxFit.cover, errorBuilder: (_, _, _) => imgPlaceholder())
+                : imgPlaceholder(),
           ),
           SafeArea(
             child: Padding(
@@ -250,7 +248,7 @@ class RoomDetailView extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            _buildPaymentPill(paymentStatusLabel()),
+                            buildPaymentPill(paymentStatusLabel()),
                             const SizedBox(height: 12),
                             Text(
                               priceVal != null ? '\$${priceVal.toStringAsFixed(0)}' : '-',

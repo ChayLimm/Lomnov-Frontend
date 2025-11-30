@@ -25,7 +25,6 @@ class BuildingDetailView extends StatefulWidget {
 
 class _BuildingDetailViewState extends State<BuildingDetailView> {
   final _repository = BuildingRepositoryImpl();
-  final GlobalKey<RefreshIndicatorState> _refreshKey = GlobalKey<RefreshIndicatorState>();
   bool _loading = true;
   String? _error;
   BuildingModel? _building;
@@ -33,7 +32,6 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
   int _currentPage = 1;
   int _lastPage = 1;
   final int _perPage = 5;
-  bool _isLoadingMore = false;
   bool _isPageLoading = false;
   final _roomSearchCtrl = TextEditingController();
   String _activeFilter = 'All'; // All, Available, Unpaid, Pending, Paid
@@ -84,10 +82,6 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
     super.dispose();
   }
 
-  Future<void> _loadMore() async {
-    // Deprecated: use _goToPage instead
-    return Future.value();
-  }
 
   Future<void> _goToPage(int page) async {
     if (_isPageLoading || page < 1 || page > _lastPage) return;
@@ -564,21 +558,6 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
       if (mounted) setState(() => _isPageLoading = false);
     }
   }
-
-  Color _statusColor(String label) {
-    switch (label) {
-      case 'Available':
-        return const Color(0xFFE3F2FD); // light blue
-      case 'Unpaid':
-        return const Color(0xFFFDECEA); // light red
-      case 'Pending':
-        return const Color(0xFFFFF4E5); // light orange
-      case 'Paid':
-      default:
-        return const Color(0xFFE3F7E9); // light green
-    }
-  }
-
   Widget _imgPlaceholder() => Container(
     color: Colors.grey.shade300,
     child: const Center(child: Icon(Icons.image_not_supported_outlined)),
