@@ -47,6 +47,7 @@ dependencies:
   animated_notch_bottom_bar: ^1.0.3
   crystal_navigation_bar: ^1.0.4
   mobile_device_identifier: ^0.0.3
+  google_nav_bar: ^5.0.7
   
 dev_dependencies:
   flutter_test:
