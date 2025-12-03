@@ -80,7 +80,7 @@ class _Section extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surfaceColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.dividerColor.withOpacity(0.6), width: 1),
+        border: Border.all(color: AppColors.dividerColor.withValues(alpha: 0.6), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -96,7 +96,7 @@ class _Section extends StatelessWidget {
               ),
             ),
           ),
-          Divider(height: 1, color: AppColors.dividerColor.withOpacity(0.7)),
+          Divider(height: 1, color: AppColors.dividerColor.withValues(alpha: 0.7)),
           ...children,
         ],
       ),

@@ -1,3 +1,5 @@
+// ignore_for_file: control_flow_in_finally
+
 import 'package:flutter/material.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:app/domain/models/report.dart';
@@ -157,7 +159,7 @@ class _Filters extends StatelessWidget {
               onPressed: (){},
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.textPrimary,
-                side: BorderSide(color: AppColors.dividerColor.withOpacity(0.8)),
+                side: BorderSide(color: AppColors.dividerColor.withValues(alpha: 0.8)),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               ),
               icon: const Icon(Icons.download_rounded, size: 16),
