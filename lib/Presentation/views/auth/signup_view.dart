@@ -21,6 +21,7 @@ class _SignUpViewState extends State<SignUpView> {
   bool _obscure = true;
   bool _obscure2 = true;
   bool _agree = false;
+  String? _lastVmError;
 
   @override
   void dispose() {
@@ -34,6 +35,22 @@ class _SignUpViewState extends State<SignUpView> {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<AuthViewModel>();
+
+    // Show a friendly SnackBar when AuthViewModel reports an error.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final err = vm.error;
+      if (err != null && err != _lastVmError) {
+        _lastVmError = err;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_friendlyError(err)),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    });
 
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
@@ -160,13 +177,58 @@ class _SignUpViewState extends State<SignUpView> {
   }
 
   void _submit(AuthViewModel vm) {
-    if (_passCtrl.text != _confirmCtrl.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
-      );
+    // Client-side validations for better user feedback
+    final name = _nameCtrl.text.trim();
+    final email = _emailCtrl.text.trim();
+    final pass = _passCtrl.text;
+    final confirm = _confirmCtrl.text;
+
+    if (name.isEmpty) {
+      _showMessage('Please enter your full name');
       return;
     }
-    vm.register(_nameCtrl.text.trim(), _emailCtrl.text.trim(), _passCtrl.text);
+    if (email.isEmpty || !_isValidEmail(email)) {
+      _showMessage('Please enter a valid email address');
+      return;
+    }
+    if (pass.length < 6) {
+      _showMessage('Password must be at least 6 characters');
+      return;
+    }
+    if (pass != confirm) {
+      _showMessage('Passwords do not match');
+      return;
+    }
+    if (!_agree) {
+      _showMessage('You must agree to the Terms and Conditions');
+      return;
+    }
+
+    // Reset last shown vm error so we can display any new error from this attempt
+    _lastVmError = null;
+    vm.register(name, email, pass);
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+    );
+  }
+
+  bool _isValidEmail(String email) {
+    final re = RegExp(r"^[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}");
+    return re.hasMatch(email);
+  }
+
+  String _friendlyError(String raw) {
+    final l = raw.toLowerCase();
+    if (l.contains('email') && l.contains('already')) return 'An account with this email already exists.';
+    if (l.contains('email')) return 'There was a problem with the email you provided.';
+    if (l.contains('password')) return 'There was a problem with the password you provided.';
+    if (l.contains('network') || l.contains('socket') || l.contains('timeout')) return 'Network error. Check your connection and try again.';
+    if (l.contains('401') || l.contains('unauthor')) return 'Authentication failed. Please check your credentials.';
+    if (l.contains('500') || l.contains('server')) return 'Server error. Please try again later.';
+    return raw; // fallback to raw message
   }
 }
 

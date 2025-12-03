@@ -37,6 +37,10 @@ class Endpoints {
   static const String notificationsUnread = '/api/notifications/unread';
   static const String sendReminders = '/api/invoices/send-reminders';
   
+  // Services (settings)
+  static const String services = '/api/services';
+  static String serviceById(int id) => '/api/services/$id';
+  
 
   // Normalize and validate BASE_URL from environment
   static String _computeBaseUrl() {

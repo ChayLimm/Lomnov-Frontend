@@ -18,6 +18,7 @@ class _LoginViewState extends State<LoginView> {
   final _passCtrl = TextEditingController();
   bool _obscure = true;
   bool _remember = false;
+  String? _lastVmError;
 
   @override
   void dispose() {
@@ -29,6 +30,21 @@ class _LoginViewState extends State<LoginView> {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<AuthViewModel>();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final err = vm.error;
+      if (err != null && err != _lastVmError) {
+        _lastVmError = err;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_friendlyError(err)),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    });
 
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
@@ -92,10 +108,6 @@ class _LoginViewState extends State<LoginView> {
                 ),
               ),
               const SizedBox(height: 8),
-              if (vm.error != null) ...[
-                Text(vm.error!, style: const TextStyle(color: Colors.red)),
-                const SizedBox(height: 8),
-              ],
               GradientButton(
                 label: vm.loading ? 'Please wait…' : 'Login',
                 loading: vm.loading,
@@ -124,7 +136,20 @@ class _LoginViewState extends State<LoginView> {
   }
 
   void _submit(AuthViewModel vm) {
-    vm.login(_emailCtrl.text.trim(), _passCtrl.text);
+    final email = _emailCtrl.text.trim();
+    final pass = _passCtrl.text;
+
+    if (email.isEmpty || !_isValidEmail(email)) {
+      _showMessage('Please enter a valid email address');
+      return;
+    }
+    if (pass.isEmpty) {
+      _showMessage('Please enter your password');
+      return;
+    }
+
+    _lastVmError = null;
+    vm.login(email, pass);
   }
 }
 
@@ -168,5 +193,29 @@ class _AuthHeader extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+extension on _LoginViewState {
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+    );
+  }
+
+  bool _isValidEmail(String email) {
+    final re = RegExp(r"^[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}");
+    return re.hasMatch(email);
+  }
+
+  String _friendlyError(String raw) {
+    final l = raw.toLowerCase();
+    if (l.contains('email') && l.contains('already')) return 'An account with this email already exists.';
+    if (l.contains('email')) return 'There was a problem with the email you provided.';
+    if (l.contains('password')) return 'There was a problem with the password you provided.';
+    if (l.contains('network') || l.contains('socket') || l.contains('timeout')) return 'Network error. Check your connection and try again.';
+    if (l.contains('401') || l.contains('unauthor')) return 'Authentication failed. Please check your credentials.';
+    if (l.contains('500') || l.contains('server')) return 'Server error. Please try again later.';
+    return raw;
   }
 }
