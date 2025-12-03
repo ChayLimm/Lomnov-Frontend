@@ -41,6 +41,10 @@ class Endpoints {
   static const String services = '/api/services';
   static String serviceById(int id) => '/api/services/$id';
   
+  // Room types
+  static const String roomTypes = '/api/room-types';
+  static String roomTypeById(int id) => '/api/room-types/$id';
+  
 
   // Normalize and validate BASE_URL from environment
   static String _computeBaseUrl() {
