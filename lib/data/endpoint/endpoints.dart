@@ -20,12 +20,14 @@ class Endpoints {
   // Buildings
   static const String buildings = '/api/buildings';
   static String buildingById(int id) => '/api/buildings/$id';
-  static String buildingsByLandlord(int landlordId) =>'/api/buildings/landlord/$landlordId';
+  static String buildingsByLandlord(int landlordId) =>
+      '/api/buildings/landlord/$landlordId';
   static const String buildingPicturesUpload = '/api/images/upload';
 
   //rooms
   static const String rooms = '/api/rooms';
   static String roomById(int id) => '/api/rooms/$id';
+  static String roomServices(int id) => 'api/rooms/$id/services';
   static String roomServices(int roomId) => '/api/rooms/$roomId/services';
   static String roomServiceById(int roomId, int serviceId) =>
       '/api/rooms/$roomId/services/$serviceId';
@@ -44,10 +46,10 @@ class Endpoints {
   static String notificationMarkRead(int id) => '/api/notifications/$id/read';
   static const String notificationsUnread = '/api/notifications/unread';
   static const String sendReminders = '/api/invoices/send-reminders';
-  
+
   // Reports
   static const String reports = '/api/reports';
-  
+
   // Services (settings)
   static const String services = '/api/services';
   static String serviceById(int id) => '/api/services/$id';
@@ -61,12 +63,12 @@ class Endpoints {
   // Roles
   static const String roles = '/api/roles';
   static String roleById(int id) => '/api/roles/$id';
-  
+
   // Consumptions
-  static String consumptionsByRoom(int roomId) => '/api/consumptions/room/$roomId';
+  static String consumptionsByRoom(int roomId) =>
+      '/api/consumptions/room/$roomId';
   static const String consumptions = '/api/consumptions';
   static String consumptionById(int id) => '/api/consumptions/$id';
-  
 
   // Normalize and validate BASE_URL from environment
   static String _computeBaseUrl() {
