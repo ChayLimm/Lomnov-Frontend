@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:app/Presentation/provider/auth_viewmodel.dart';
 import 'package:app/Presentation/views/settings/service_view.dart';
+import 'package:app/Presentation/views/settings/room_type_view.dart';
 
 class SettingsView extends StatelessWidget {
   const SettingsView({super.key});
@@ -50,6 +51,7 @@ class SettingsView extends StatelessWidget {
               _Tile(icon: Icons.lightbulb_outline, label: 'Services', onTap: () => Get.to(() => const ServiceView())),
               const _Tile(icon: Icons.account_balance_wallet_outlined, label: 'Account Bakong'),
               const _Tile(icon: Icons.rule_folder_outlined, label: 'Rules'),
+              _Tile(icon: Icons.room_service_outlined, label: 'Room Types', onTap: () => Get.to(() => const RoomTypeView())),
             ],
           ),
           const SizedBox(height: 12),
