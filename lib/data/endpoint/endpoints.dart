@@ -27,6 +27,7 @@ class Endpoints {
   //rooms
   static const String rooms = '/api/rooms';
   static String roomById(int id) => '/api/rooms/$id';
+  static String roomServices(int id)=> 'api/rooms/$id/services';
 
   // Dashboard / Home
   static const String dashboardSummary = '/api/dashboard/summary';

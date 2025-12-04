@@ -3,6 +3,8 @@ import 'dart:developer' as dev;
 import 'package:app/data/services/buildings_service/api_base.dart';
 import 'package:app/data/services/http_error_handler.dart';
 import 'package:app/data/dto/room_dto.dart';
+import 'package:app/data/endpoint/endpoints.dart';
+
 
 /// Simple pagination metadata container
 class Pagination {
@@ -145,5 +147,15 @@ class RoomFetchService extends ApiBase {
     }
 
     throw Exception('Unexpected response when updating room');
+  }
+
+   Future<void> getRoomServices(int roomId) async {
+    final uri = buildUri( Endpoints.roomServices(roomId));
+    final headers = await buildHeaders();
+    final response = await HttpErrorHandler.executeRequest(
+      () => httpClient.delete(uri, headers: headers),
+    );
+    // Will throw if status is not successful
+    HttpErrorHandler.handleResponse(response, 'Failed to delete room');
   }
 }
