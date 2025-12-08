@@ -1,16 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
-import 'package:app/Presentation/views/buildings/edit_room_view.dart';
+import 'package:app/Presentation/views/rooms/edit_room_view.dart';
+import 'package:app/Presentation/provider/room_services_viewmodel.dart';
+import 'package:app/data/implementations/rooms/room_services_repository_impl.dart';
 
 // A detail view for a single room. Accepts either a domain model or raw Map.
-class RoomDetailView extends StatelessWidget {
+class RoomDetailView extends StatefulWidget {
   final dynamic room; // RoomModel or Map<String, dynamic>
   final int? roomId;
 
   // `room` or `roomId` may be provided. If neither is provided the view will
   // attempt to read `Get.arguments` or `Get.parameters` (for named routes).
   const RoomDetailView({super.key, this.room, this.roomId});
+
+  @override
+  State<RoomDetailView> createState() => _RoomDetailViewState();
+}
+
+class _RoomDetailViewState extends State<RoomDetailView> {
+  late RoomServicesViewModel _servicesViewModel;
+
+  @override
+  void initState() {
+    super.initState();
+    _servicesViewModel = RoomServicesViewModel(RoomServicesRepositoryImpl());
+    _loadServices();
+  }
+
+  void _loadServices() {
+    // Determine the effective room object and extract roomId
+    final dynamic arg = widget.room ?? Get.arguments;
+    final dynamic byParam = Get.parameters.isNotEmpty ? Get.parameters : null;
+    final dynamic effectiveRoom = arg ?? (byParam != null && byParam['id'] != null ? {'id': byParam['id']} : null) ?? {};
+    
+    final isMap = effectiveRoom is Map<String, dynamic>;
+    final int? roomId = widget.roomId ?? 
+      (isMap ? (effectiveRoom['id'] as int?) : (effectiveRoom.id as int?));
+    
+    if (roomId != null) {
+      _servicesViewModel.loadRoomServices(roomId);
+    }
+  }
+
+  @override
+  void dispose() {
+    _servicesViewModel.dispose();
+    super.dispose();
+  }
 
   String _safeString(dynamic v) => v == null ? '' : v.toString();
 
@@ -21,9 +59,9 @@ class RoomDetailView extends StatelessWidget {
   }
 
   Map<String, dynamic>? _buildingMap() {
-    if (room is Map<String, dynamic>) return (room['building'] is Map) ? Map<String, dynamic>.from(room['building']) : null;
+    if (widget.room is Map<String, dynamic>) return (widget.room['building'] is Map) ? Map<String, dynamic>.from(widget.room['building']) : null;
     try {
-      final b = room.building;
+      final b = widget.room.building;
       if (b == null) return null;
       return {
         'id': b.id,
@@ -39,9 +77,9 @@ class RoomDetailView extends StatelessWidget {
   }
 
   Map<String, dynamic>? _currentContractMap() {
-    if (room is Map<String, dynamic>) return (room['current_contract'] is Map) ? Map<String, dynamic>.from(room['current_contract']) : null;
+    if (widget.room is Map<String, dynamic>) return (widget.room['current_contract'] is Map) ? Map<String, dynamic>.from(widget.room['current_contract']) : null;
     try {
-      final c = room.currentContract;
+      final c = widget.room.currentContract;
       if (c == null) return null;
       return {
         'id': c.id,
@@ -61,7 +99,7 @@ class RoomDetailView extends StatelessWidget {
   Widget build(BuildContext context) {
     // Determine the effective room object: prefer constructor `room`, then
     // `Get.arguments`, then attempt to read from route parameters.
-    final dynamic arg = room ?? Get.arguments;
+    final dynamic arg = widget.room ?? Get.arguments;
     final dynamic byParam = Get.parameters.isNotEmpty ? Get.parameters : null;
 
     final dynamic effectiveRoom = arg ?? (byParam != null && byParam['id'] != null ? {'id': byParam['id']} : null) ?? {};
@@ -226,19 +264,64 @@ class RoomDetailView extends StatelessWidget {
                     const SizedBox(height: 12),
                     Text('Room Facility', style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: const [
-                        Chip(label: Text('Pool')), 
-                        Chip(label: Text('AC')),
-                        Chip(label: Text('WiFi')),
-                      ],
+                    ChangeNotifierProvider.value(
+                      value: _servicesViewModel,
+                      child: Consumer<RoomServicesViewModel>(
+                        builder: (context, viewModel, child) {
+                          if (viewModel.isLoading) {
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          }
+
+                          if (viewModel.error != null) {
+                            return Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                'Error loading services',
+                                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                              ),
+                            );
+                          }
+
+                          if (!viewModel.hasServices) {
+                            return Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                'No services available',
+                                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                              ),
+                            );
+                          }
+
+                          return SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: viewModel.services
+                                  .map((service) => Padding(
+                                        padding: const EdgeInsets.only(right: 8.0),
+                                        child: Chip(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          backgroundColor: AppColors.backgroundColor,
+                                          side: BorderSide(color: AppColors.primaryColor.withOpacity(0.18)),
+                                          label: Text(
+                                            service.name,
+                                            style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
+                                          ),
+                                        ),
+                                      ))
+                                  .toList(),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                     const SizedBox(height: 18),
                     Text('Rental Information', style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
-                    // Improved layout: left label, right column with pill above monthly amount.
-                    // Two-column layout: left is the label, right column contains payment pill above monthly amount (right-aligned)
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

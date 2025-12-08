@@ -7,8 +7,8 @@ import 'package:app/Presentation/widgets/error1.dart';
 import 'package:app/Presentation/widgets/empty1.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:app/data/services/rooms_service/fetch_service.dart';
-import 'package:app/Presentation/views/buildings/add_room_view.dart';
-import 'package:app/Presentation/views/buildings/edit_room_view.dart';
+import 'package:app/Presentation/views/rooms/add_room_view.dart';
+import 'package:app/Presentation/views/rooms/edit_room_view.dart';
 import 'package:app/Presentation/views/rooms/room_detail_view.dart';
 
 // Layout constants
