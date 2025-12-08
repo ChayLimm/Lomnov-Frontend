@@ -1,3 +1,4 @@
+import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app/Presentation/provider/settings/room_type_provider.dart';
@@ -57,11 +58,13 @@ class _RoomTypeScreen extends StatelessWidget {
     final state = context.watch<RoomTypeState>();
 
     return Scaffold(
+      backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
+        backgroundColor: AppColors.backgroundColor,
         title: const Text('Room Types'),
         leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Get.back()),
         actions: [
-          TextButton(onPressed: () => _showAddDialog(context), child: const Text('Add', style: TextStyle(color: Colors.white))),
+          TextButton(onPressed: () => _showAddDialog(context), child: const Text('Add', style: TextStyle(color: AppColors.primaryColor))),
         ],
       ),
       body: Padding(

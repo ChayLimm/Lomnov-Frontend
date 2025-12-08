@@ -13,7 +13,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 import 'package:app/Presentation/views/buildings/add_building_view.dart';
-import 'package:app/Presentation/views/buildings/add_room_view.dart';
+import 'package:app/Presentation/views/rooms/add_room_view.dart';
 import 'package:app/Presentation/views/buildings/building_detail_view.dart';
 import 'package:app/Presentation/views/settings/settings_view.dart';
 import 'package:app/Presentation/views/settings/edit_profile_view.dart';
@@ -103,6 +103,7 @@ class MyApp extends StatelessWidget {
             return RoomDetailView(roomId: id ?? 0);
           },
         ),
+
       ],
     );
   }
