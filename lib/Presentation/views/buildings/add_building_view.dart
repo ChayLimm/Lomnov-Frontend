@@ -1,6 +1,7 @@
 import 'package:app/data/implementations/building/building_implementation.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:app/Presentation/provider/auth_viewmodel.dart';
@@ -143,6 +144,25 @@ class _AddBuildingViewState extends State<AddBuildingView> {
     }
   }
 
+  InputDecoration _fieldDecoration(String label, {IconData? icon}) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: icon != null ? Icon(icon, color: AppColors.primaryColor) : null,
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: AppColors.primaryColor, width: 1.5),
+      ),
+    );
+  }
+
   
 
   @override
@@ -178,7 +198,7 @@ class _AddBuildingViewState extends State<AddBuildingView> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Specify exactly as in your building',
+                                'Provide the building details below',
                                 style: TextStyle(
                                   color: Theme.of(context).textTheme.bodySmall?.color,
                                 ),
@@ -186,10 +206,7 @@ class _AddBuildingViewState extends State<AddBuildingView> {
                               const SizedBox(height: 16),
                               TextFormField(
                                 controller: _nameCtrl,
-                                decoration: const InputDecoration(
-                                  labelText: 'Building name',
-                                  border: UnderlineInputBorder(),
-                                ),
+                                decoration: _fieldDecoration('Building name', icon: Icons.home_work_outlined),
                                 validator: (v) => (v == null || v.trim().isEmpty)
                                     ? 'Name is required'
                                     : null,
@@ -198,10 +215,7 @@ class _AddBuildingViewState extends State<AddBuildingView> {
                               // Landlord ID field hidden; value is auto-filled from user
                               TextFormField(
                                 controller: _addressCtrl,
-                                decoration: const InputDecoration(
-                                  labelText: 'Address',
-                                  border: UnderlineInputBorder(),
-                                ),
+                                decoration: _fieldDecoration('Address', icon: Icons.location_on_outlined),
                                 validator: (v) => (v == null || v.trim().isEmpty)
                                     ? 'Address is required'
                                     : null,
@@ -213,6 +227,7 @@ class _AddBuildingViewState extends State<AddBuildingView> {
                                     child: _NumberDropdownField(
                                       controller: _floorCtrl,
                                       label: 'Floor',
+                                      icon: Icons.layers_outlined,
                                       min: 1,
                                       max: 10,
                                     ),
@@ -221,7 +236,8 @@ class _AddBuildingViewState extends State<AddBuildingView> {
                                   Expanded(
                                     child: _NumberDropdownField(
                                       controller: _unitCtrl,
-                                      label: 'unit',
+                                      label: 'Unit',
+                                      icon: Icons.apartment,
                                       min: 1,
                                       max: 20,
                                     ),
@@ -272,11 +288,13 @@ class _AddBuildingViewState extends State<AddBuildingView> {
 class _NumberDropdownField extends StatefulWidget {
   final TextEditingController controller;
   final String label;
+  final IconData? icon;
   final int min;
   final int max;
   const _NumberDropdownField({
     required this.controller,
     required this.label,
+    this.icon,
     required this.min,
     required this.max,
   });
@@ -297,29 +315,99 @@ class _NumberDropdownFieldState extends State<_NumberDropdownField> {
 
   @override
   Widget build(BuildContext context) {
-    return InputDecorator(
-      decoration: InputDecoration(
-        labelText: widget.label,
-        border: const UnderlineInputBorder(),
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<int>(
-          isExpanded: true,
-          value: _value,
-          menuMaxHeight: 260, // limit popup height so it doesn't fill the screen
-          items: List.generate(widget.max - widget.min + 1, (i) => widget.min + i)
-              .map((n) => DropdownMenuItem(value: n, child: Text(n.toString())))
-              .toList(),
-          onChanged: (v) {
-            if (v == null) return;
-            setState(() => _value = v);
-            widget.controller.text = v.toString();
-          },
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: _openPicker,
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: widget.label,
+          prefixIcon: widget.icon != null ? Icon(widget.icon, color: AppColors.primaryColor) : null,
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: AppColors.primaryColor, width: 1.5),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                _value.toString(),
+                style: const TextStyle(color: Colors.black87),
+              ),
+            ),
+            Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primaryColor),
+          ],
         ),
       ),
     );
+  }
+
+  Future<void> _openPicker() async {
+    final values = List.generate(widget.max - widget.min + 1, (i) => widget.min + i);
+    int initialIndex = values.indexOf(_value);
+    if (initialIndex < 0) initialIndex = 0;
+    int tempIndex = initialIndex;
+
+    final pickedIndex = await showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 300,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(null),
+                        child: const Text('Cancel'),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(tempIndex),
+                        child: Text('Done', style: TextStyle(color: AppColors.primaryColor)),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 0),
+                Expanded(
+                  child: CupertinoPicker(
+                    scrollController: FixedExtentScrollController(initialItem: initialIndex),
+                    itemExtent: 40,
+                    onSelectedItemChanged: (i) => tempIndex = i,
+                    children: values
+                        .map((n) => Center(child: Text(n.toString())))
+                        .toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (pickedIndex != null && pickedIndex >= 0 && pickedIndex < values.length) {
+      final newVal = values[pickedIndex];
+      setState(() => _value = newVal);
+      widget.controller.text = newVal.toString();
+    }
   }
 }
 
@@ -478,7 +566,7 @@ class _ImagePickerPlaceholderState extends State<_ImagePickerPlaceholder> {
                   Positioned.fill(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.35),
+                        color: Colors.black.withOpacity(0.35),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Center(
