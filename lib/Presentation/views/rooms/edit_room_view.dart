@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'room_form_view.dart';
+import 'room_form/room_form_view.dart';
 
 class EditRoomView extends StatelessWidget {
   final dynamic room; // RoomModel or Map

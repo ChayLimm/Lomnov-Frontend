@@ -15,8 +15,8 @@ import 'package:app/Presentation/views/buildings/add_building_view.dart';
 import 'package:app/Presentation/views/rooms/add_room_view.dart';
 import 'package:app/Presentation/views/buildings/building_detail_view.dart';
 import 'package:app/Presentation/views/settings/settings_view.dart';
-import 'package:app/Presentation/views/settings/edit_profile_view.dart';
-import 'package:app/Presentation/views/settings/service_view.dart';
+import 'package:app/Presentation/views/settings/profile/edit_profile_view.dart';
+import 'package:app/Presentation/views/settings/services/service_view.dart';
 import 'package:app/data/services/mobile_device_identifier.dart';
 
 final DeviceIdService deviceIdService = DeviceIdService();
