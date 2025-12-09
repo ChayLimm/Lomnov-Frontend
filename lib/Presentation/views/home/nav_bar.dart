@@ -9,37 +9,39 @@ class HomeNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+    // Use SafeArea with a minimal bottom inset and tighter padding
+    // to avoid oversized nav bars and overlap with the iOS home indicator.
+    return SafeArea(
+      minimum: const EdgeInsets.only(left: 14, right: 14, bottom: 8),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(24),
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
             color: const Color.fromARGB(255, 255, 255, 255),
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: AppColors.primaryColor.withValues(alpha: 0.25), width: 1),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: AppColors.primaryColor.withValues(alpha: 0.20),
+              width: 1,
+            ),
             boxShadow: const [],
           ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
-              child: GNav(
-                selectedIndex: currentIndex,
-                onTabChange: onTap,
-                gap: 8,
-                color: AppColors.textPrimary.withValues(alpha: 0.90),
-                activeColor: AppColors.primaryColor,
-                iconSize: 24,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                tabBackgroundColor: AppColors.primaryColor.withValues(alpha: 0.12),
-                tabs: [
-                  GButton(icon: Icons.home, text: 'Home'),
-                  GButton(icon: Icons.apartment, text: 'Buildings'),
-                  GButton(icon: Icons.bar_chart, text: 'Reports'),
-                  GButton(icon: Icons.settings, text: 'Settings'),
-                ],
-              ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 6.0),
+            child: GNav(
+              selectedIndex: currentIndex,
+              onTabChange: onTap,
+              gap: 8,
+              color: AppColors.textPrimary.withValues(alpha: 0.90),
+              activeColor: AppColors.primaryColor,
+              iconSize: 22,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              tabBackgroundColor: AppColors.primaryColor.withValues(alpha: 0.12),
+              tabs: const [
+                GButton(icon: Icons.home, text: 'Home'),
+                GButton(icon: Icons.apartment, text: 'Buildings'),
+                GButton(icon: Icons.bar_chart, text: 'Reports'),
+                GButton(icon: Icons.settings, text: 'Settings'),
+              ],
             ),
           ),
         ),
