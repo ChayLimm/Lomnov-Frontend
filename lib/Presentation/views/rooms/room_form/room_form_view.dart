@@ -107,6 +107,7 @@ class _RoomFormViewState extends State<RoomFormView> {
       final dto = await svc.fetchBuildingById(_buildingId);
       final maxFloor = dto.floor; // dto has int floor
       setState(() {
+        // ignore: unnecessary_type_check
         _maxBuildingFloor = (maxFloor is int && maxFloor > 0) ? maxFloor : null;
         _loadingBuildingFloor = false;
       });
@@ -253,7 +254,11 @@ class _RoomFormViewState extends State<RoomFormView> {
         }
 
         if (!mounted) return;
-        Get.toNamed('/rooms/${created.id}', arguments: created);
+        // Navigate to the room detail view and, when returning,
+        // signal the previous screen (e.g., building detail) to refresh.
+        final _ = await Get.toNamed('/rooms/${created.id}', arguments: created);
+        if (!mounted) return;
+        Get.back(result: true);
         Get.snackbar(
           'Created',
           'Room created',
@@ -768,14 +773,14 @@ class _RoomFormViewState extends State<RoomFormView> {
                           child: Card(
                             elevation: 0,
                             color: isSelected
-                                ? AppColors.primaryColor.withOpacity(0.1)
+                                ? AppColors.primaryColor.withValues(alpha: 0.1)
                                 : AppColors.backgroundColor,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                               side: BorderSide(
                                 color: isSelected
                                     ? AppColors.primaryColor
-                                    : AppColors.primaryColor.withOpacity(0.5),
+                                    : AppColors.primaryColor.withValues(alpha: 0.5),
                                 width: 1,
                               ),
                             ),
@@ -820,7 +825,7 @@ class _RoomFormViewState extends State<RoomFormView> {
                                           color: isSelected
                                               ? AppColors.primaryColor
                                               : AppColors.primaryColor
-                                                    .withOpacity(0.5),
+                                                    .withValues(alpha: 0.5),
                                           size: 20,
                                         ),
                                       ],

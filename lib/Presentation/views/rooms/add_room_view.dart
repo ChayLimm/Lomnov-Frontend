@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'room_form_view.dart';
+import 'room_form/room_form_view.dart';
 
 class AddRoomView extends StatelessWidget {
   final int buildingId;

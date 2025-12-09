@@ -226,7 +226,13 @@ class _RoomDetailViewState extends State<RoomDetailView> {
                             const SizedBox(width: 8),
                             // small edit icon beside the status
                             InkWell(
-                              onTap: () => Get.to(() => EditRoomView(room: effectiveRoom)),
+                              onTap: () async {
+                                final res = await Get.to(() => EditRoomView(room: effectiveRoom));
+                                if (res == true) {
+                                  _loadServices();
+                                  Get.snackbar('Updated', 'Room refreshed');
+                                }
+                              },
                               borderRadius: BorderRadius.circular(8),
                               child: Container(
                                 padding: const EdgeInsets.all(6),
