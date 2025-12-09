@@ -50,23 +50,12 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
     });
     try {
       final b = await _repository.fetchBuildingById(widget.buildingId);
-      // Attempt to fetch rooms via the rooms API. If it fails, fall back
-      // to the rooms returned inside the building DTO.
-      try {
-        final roomService = RoomFetchService();
-        // Use the global rooms endpoint for the room cards (no buildingId)
-        final resp = await roomService.fetchRooms(page: 1, perPage: _perPage);
-        _rooms = resp.items.map((d) => d.toDomain()).toList();
-        _currentPage = resp.pagination.currentPage;
-        _lastPage = resp.pagination.lastPage;
-        dev.log('[Rooms] fetched ${_rooms.length} rooms from /api/rooms page=$_currentPage/$_lastPage');
-      } catch (e) {
-        // ignore and fallback to building rooms
-        _rooms = b.rooms;
-        _currentPage = 1;
-        _lastPage = 1;
-        dev.log('[Rooms] falling back to building.rooms count=${_rooms.length}');
-      }
+      // Use the building-specific data to ensure rooms match the building.
+      // Endpoint: /api/buildings/{id}
+      _rooms = b.rooms;
+      _currentPage = 1;
+      _lastPage = 1;
+      dev.log('[Rooms] using building-specific rooms count=${_rooms.length} for buildingId=${widget.buildingId}');
       if (!mounted) return;
       setState(() => _building = b);
     } catch (e) {
@@ -84,23 +73,9 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
 
 
   Future<void> _goToPage(int page) async {
-    if (_isPageLoading || page < 1 || page > _lastPage) return;
-    setState(() => _isPageLoading = true);
-    try {
-      final roomService = RoomFetchService();
-      final resp = await roomService.fetchRooms(page: page, perPage: _perPage);
-      final pageRooms = resp.items.map((d) => d.toDomain()).toList();
-      if (!mounted) return;
-      setState(() {
-        _rooms = pageRooms;
-        _currentPage = resp.pagination.currentPage;
-        _lastPage = resp.pagination.lastPage;
-      });
-    } catch (e) {
-      dev.log('[Rooms] goToPage failed: $e');
-    } finally {
-      if (mounted) setState(() => _isPageLoading = false);
-    }
+    // Pagination is disabled when using building-specific rooms.
+    // Keep this method as a no-op to avoid breaking existing calls.
+    return;
   }
 
   @override
@@ -247,8 +222,8 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
                                   // Open the Add Room form and refresh on success
                                   final res = await Get.to(() => AddRoomView(buildingId: b.id));
                                   if (res == true) {
-                                    // refresh page 1 to show newly created room
-                                    await _goToPage(1);
+                                    // Re-fetch building to update rooms list
+                                    await _load();
                                   }
                                 },
                                 icon: const Icon(Icons.add),
@@ -331,15 +306,18 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
                       roomName: roomNumber,
                       floorLabel: floorLabel,
                       status: statusLabel,
-                      onTap: () {
+                      onTap: () async {
                         // Navigate to room detail view (supports Map or domain model)
-                        Get.to(() => RoomDetailView(room: r));
+                        final res = await Get.to(() => RoomDetailView(room: r));
+                        if (res == true) {
+                          await _load();
+                        }
                       },
                       onMenuSelected: (value) async {
                         // Actions for menu.
                         if (value == 'edit') {
                           final res = await Get.to(() => EditRoomView(room: r));
-                          if (res == true) await _goToPage(_currentPage);
+                          if (res == true) await _load();
                         } else if (value == 'delete') {
                           await _confirmAndDelete(r);
                         }
@@ -357,67 +335,8 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
                       children: [
                         // compute a window of pages to show
                         Builder(builder: (ctx) {
-                          final maxButtons = 7;
-                          int start = _currentPage - (maxButtons ~/ 2);
-                          if (start < 1) start = 1;
-                          int end = start + maxButtons - 1;
-                          if (end > _lastPage) {
-                            end = _lastPage;
-                            start = (end - maxButtons + 1).clamp(1, _lastPage);
-                          }
-
-                          final buttons = <Widget>[];
-
-                          for (var i = start; i <= end; i++) {
-                            final active = i == _currentPage;
-                            buttons.add(
-                              Padding(
-                                padding: const EdgeInsets.only(right: 8.0),
-                                child: FilledButton(
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: active ? AppColors.primaryColor : Colors.grey[100],
-                                    minimumSize: const Size(44, 37),
-                                    padding: EdgeInsets.zero,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                                  ),
-                                    onPressed: _isPageLoading
-                                      ? null
-                                      : (active
-                                        ? () {}
-                                        : () => _goToPage(i)),
-                                  child: Text(
-                                    i.toString(),
-                                    style: TextStyle(
-                                      color: active ? Colors.white : Colors.black87,
-                                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }
-
-                          // add fast-forward to last page if not in window
-                          if (end < _lastPage) {
-                            buttons.add(
-                              Padding(
-                                padding: const EdgeInsets.only(right: 8.0),
-                                child: FilledButton(
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: Colors.grey[100],
-                                    minimumSize: const Size(44,44),
-                                    padding: EdgeInsets.zero,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                                  ),
-                                  onPressed: _isPageLoading ? null : () => _goToPage(_lastPage),
-                                  child: const Text('>>', style: TextStyle(color: Colors.black87, fontSize: 15)),
-                                ),
-                              ),
-                            );
-                          }
-
-                          return Row(children: buttons);
+                          // Hide pagination when using building-specific rooms
+                          return const SizedBox.shrink();
                         }),
                       ],
                     ),

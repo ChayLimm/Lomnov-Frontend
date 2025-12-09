@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:app/Presentation/provider/auth_viewmodel.dart';
-import 'package:app/Presentation/views/settings/service_view.dart';
-import 'package:app/Presentation/views/settings/room_type_view.dart';
+import 'package:app/Presentation/views/settings/services/service_view.dart';
+import 'package:app/Presentation/views/settings/room_type/room_type_view.dart';
 
 class SettingsView extends StatelessWidget {
   const SettingsView({super.key});
