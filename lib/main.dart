@@ -18,6 +18,7 @@ import 'package:app/Presentation/views/buildings/building_detail_view.dart';
 import 'package:app/Presentation/views/settings/settings_view.dart';
 import 'package:app/Presentation/views/settings/profile/edit_profile_view.dart';
 import 'package:app/Presentation/views/settings/services/service_view.dart';
+import 'package:app/Presentation/views/settings/contact/contact_us_view.dart';
 import 'package:app/data/services/mobile_device_identifier.dart';
 
 final DeviceIdService deviceIdService = DeviceIdService();
@@ -70,6 +71,7 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/notifications', page: () => const NotificationsView()),
         GetPage(name: '/settings', page: () => const SettingsView()),
         GetPage(name: ServiceView.routeName, page: () => const ServiceView()),
+        GetPage(name: '/contact-us', page: () => const ContactUsView()),
         GetPage(name: '/edit-profile', page: () => const EditProfileView()),
         GetPage(
           name: '/buildings/add',

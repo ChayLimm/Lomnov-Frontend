@@ -30,9 +30,7 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
   BuildingModel? _building;
   List<dynamic> _rooms = [];
   int _currentPage = 1;
-  int _lastPage = 1;
   final int _perPage = 5;
-  bool _isPageLoading = false;
   final _roomSearchCtrl = TextEditingController();
   String _activeFilter = 'All'; // All, Available, Unpaid, Pending, Paid
 
@@ -54,7 +52,6 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
       // Endpoint: /api/buildings/{id}
       _rooms = b.rooms;
       _currentPage = 1;
-      _lastPage = 1;
       dev.log('[Rooms] using building-specific rooms count=${_rooms.length} for buildingId=${widget.buildingId}');
       if (!mounted) return;
       setState(() => _building = b);
@@ -72,11 +69,6 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
   }
 
 
-  Future<void> _goToPage(int page) async {
-    // Pagination is disabled when using building-specific rooms.
-    // Keep this method as a no-op to avoid breaking existing calls.
-    return;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -435,7 +427,6 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
 
     if (confirmed != true) return;
 
-    setState(() => _isPageLoading = true);
     try {
       final svc = RoomFetchService();
       await svc.deleteRoom(roomId);
@@ -449,7 +440,6 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
         setState(() {
           _rooms = pageRooms;
           _currentPage = resp.pagination.currentPage;
-          _lastPage = resp.pagination.lastPage;
         });
       } catch (e) {
         // If refresh fails, fallback to removing locally so the UI still updates.
@@ -474,7 +464,7 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
       dev.log('[Rooms] delete failed: $e');
       Get.snackbar('Error', 'Failed to delete room: $e');
     } finally {
-      if (mounted) setState(() => _isPageLoading = false);
+      if (mounted) {}
     }
   }
   Widget _imgPlaceholder() => Container(

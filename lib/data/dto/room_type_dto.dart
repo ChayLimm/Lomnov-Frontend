@@ -16,7 +16,7 @@ class RoomTypeDto {
     return RoomTypeDto(
       id: data['id'] ?? 0,
       roomTypeName: data['room_type_name'] ?? data['roomTypeName'] ?? data['name'] ?? '',
-      description: data['description'] ?? null,
+      description: data['description'],
     );
   }
 
