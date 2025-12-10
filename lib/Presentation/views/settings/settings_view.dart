@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:app/Presentation/provider/auth_viewmodel.dart';
 import 'package:app/Presentation/views/settings/services/service_view.dart';
 import 'package:app/Presentation/views/settings/room_type/room_type_view.dart';
+import 'package:app/Presentation/views/settings/contact/contact_us_view.dart';
 
 class SettingsView extends StatelessWidget {
   const SettingsView({super.key});
@@ -57,8 +58,8 @@ class SettingsView extends StatelessWidget {
           const SizedBox(height: 12),
           _Section(
             title: 'Others',
-            children: const [
-              _Tile(icon: Icons.support_agent_outlined, label: 'Contact Us'),
+            children: [
+              _Tile(icon: Icons.support_agent_outlined, label: 'Contact Us', onTap: () => Get.to(() => const ContactUsView())),
             ],
           ),
           const SizedBox(height: 20),

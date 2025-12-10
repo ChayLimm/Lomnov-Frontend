@@ -254,7 +254,7 @@ class _InlineError extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.red.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.red.withOpacity(0.4)),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
@@ -300,7 +300,7 @@ class _TotalIncome extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        Divider(color: AppColors.dividerColor.withOpacity(0.8)),
+        Divider(color: AppColors.dividerColor.withValues(alpha: 0.8)),
         const SizedBox(height: 8),
         ...((d?.legends ?? [
           LegendItem('Building A', '11/15 Paid', const Color(0xFF4D8CE4)),
@@ -339,7 +339,7 @@ class _Breakdown extends StatelessWidget {
       children: [
         const Text('Breakdown', style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
-        ...rows.map((e) => _BreakdownRow(item: e, total: total)).toList(),
+        ...rows.map((e) => _BreakdownRow(item: e, total: total)),
       ],
     );
   }

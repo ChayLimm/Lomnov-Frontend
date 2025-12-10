@@ -16,10 +16,13 @@ class RoomTypesService extends ApiBase {
     final decoded = HttpErrorHandler.handleListResponse(response, 'Failed to load room types');
 
     List<dynamic>? list;
-    if (decoded is List) list = decoded;
-    else if (decoded is Map<String, dynamic>) {
-      if (decoded['data'] is List) list = decoded['data'] as List;
-      else if (decoded['room_types'] is List) list = decoded['room_types'] as List;
+    if (decoded is List) {
+      list = decoded;
+    } else if (decoded is Map<String, dynamic>) {
+      if (decoded['data'] is List) {
+        list = decoded['data'] as List;
+      // ignore: curly_braces_in_flow_control_structures
+      } else if (decoded['room_types'] is List) list = decoded['room_types'] as List;
     }
     list ??= const [];
     return RoomTypeDto.fromJsonList(list);
