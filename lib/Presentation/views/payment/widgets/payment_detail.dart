@@ -1,5 +1,8 @@
+import 'dart:ffi';
+
 import 'package:app/Presentation/provider/payment_viewmode/payment_viewmodel.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
+import 'package:app/Presentation/views/payment/widgets/info_row.dart';
 import 'package:app/domain/models/building_model/building_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
