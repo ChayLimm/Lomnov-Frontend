@@ -18,14 +18,16 @@ class ServiceDto {
     final data = json['data'] ?? json;
     final priceRaw = data['unit_price'] ?? data['unitPrice'];
     double? parsedPrice;
-    if (priceRaw is num) parsedPrice = priceRaw.toDouble();
-    else if (priceRaw is String) parsedPrice = double.tryParse(priceRaw);
+    if (priceRaw is num) {
+      parsedPrice = priceRaw.toDouble();
+    // ignore: curly_braces_in_flow_control_structures
+    } else if (priceRaw is String) parsedPrice = double.tryParse(priceRaw);
 
     return ServiceDto(
       id: data['id'] ?? 0,
       name: data['name'] ?? '',
       unitPrice: parsedPrice,
-      description: data['description'] ?? null,
+      description: data['description'],
     );
   }
 

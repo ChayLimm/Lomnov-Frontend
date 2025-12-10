@@ -84,7 +84,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                               width: 72,
                               height: 72,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => const Icon(Icons.person, color: AppColors.primaryColor, size: 36),
+                              errorBuilder: (_, _, _) => const Icon(Icons.person, color: AppColors.primaryColor, size: 36),
                             ),
                           ),
                   ),

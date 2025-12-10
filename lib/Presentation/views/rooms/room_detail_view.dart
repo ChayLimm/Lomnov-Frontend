@@ -312,7 +312,7 @@ class _RoomDetailViewState extends State<RoomDetailView> {
                                         child: Chip(
                                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                           backgroundColor: AppColors.backgroundColor,
-                                          side: BorderSide(color: AppColors.primaryColor.withOpacity(0.18)),
+                                          side: BorderSide(color: AppColors.primaryColor.withValues(alpha: 0.18)),
                                           label: Text(
                                             service.name,
                                             style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
