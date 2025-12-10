@@ -28,7 +28,7 @@ class Endpoints {
   static const String rooms = '/api/rooms';
   static String roomById(int id) => '/api/rooms/$id';
   static String roomServices(int id) => 'api/rooms/$id/services';
-  static String roomServices(int roomId) => '/api/rooms/$roomId/services';
+  // static String roomServices(int roomId) => '/api/rooms/$roomId/services';
   static String roomServiceById(int roomId, int serviceId) =>
       '/api/rooms/$roomId/services/$serviceId';
 
