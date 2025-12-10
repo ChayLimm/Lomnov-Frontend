@@ -12,9 +12,10 @@ class RoomServicesService extends ApiBase {
     final uri = buildUri(Endpoints.roomServices(roomId));
     final headers = await buildHeaders();
 
-    dev.log('[HTTP] GET $uri');
+    dev.log('[HTTP] GET $uri headers=${headers.keys.join(',')}');
     final response = await HttpErrorHandler.executeRequest(
       () => httpClient.get(uri, headers: headers),
+      timeout: const Duration(seconds: 5),
     );
 
     final decoded = HttpErrorHandler.handleListResponse(
@@ -43,9 +44,10 @@ class RoomServicesService extends ApiBase {
     final headers = await buildHeaders();
     final payload = {'service_id': serviceId};
 
-    dev.log('[HTTP] POST $uri payload=${jsonEncode(payload)}');
+    dev.log('[HTTP] POST $uri headers=${headers.keys.join(',')} payload=${jsonEncode(payload)}');
     final response = await HttpErrorHandler.executeRequest(
       () => httpClient.post(uri, headers: headers, body: jsonEncode(payload)),
+      timeout: const Duration(seconds: 10),
     );
 
     final decoded = HttpErrorHandler.handleResponse(
@@ -67,9 +69,10 @@ class RoomServicesService extends ApiBase {
     final uri = buildUri(Endpoints.roomServiceById(roomId, serviceId));
     final headers = await buildHeaders();
 
-    dev.log('[HTTP] DELETE $uri');
+    dev.log('[HTTP] DELETE $uri headers=${headers.keys.join(',')}');
     final response = await HttpErrorHandler.executeRequest(
       () => httpClient.delete(uri, headers: headers),
+      timeout: const Duration(seconds: 10),
     );
 
     HttpErrorHandler.handleResponse(response, 'Failed to detach service');
