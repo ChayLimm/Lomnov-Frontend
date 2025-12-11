@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:app/Presentation/views/rooms/edit_room_view.dart';
 import 'package:app/Presentation/provider/room_services_viewmodel.dart';
+import 'package:app/Presentation/provider/contract_viewmodel.dart';
 import 'package:app/data/implementations/rooms/room_services_repository_impl.dart';
+import 'package:app/data/implementations/contract/contract_repository_impl.dart';
 
 // A detail view for a single room. Accepts either a domain model or raw Map.
 class RoomDetailView extends StatefulWidget {
@@ -21,12 +23,15 @@ class RoomDetailView extends StatefulWidget {
 
 class _RoomDetailViewState extends State<RoomDetailView> {
   late RoomServicesViewModel _servicesViewModel;
+  late ContractViewModel _contractViewModel;
 
   @override
   void initState() {
     super.initState();
     _servicesViewModel = RoomServicesViewModel(RoomServicesRepositoryImpl());
+    _contractViewModel = ContractViewModel(ContractRepositoryImpl());
     _loadServices();
+    _loadContract();
   }
 
   void _loadServices() {
@@ -44,9 +49,24 @@ class _RoomDetailViewState extends State<RoomDetailView> {
     }
   }
 
+  void _loadContract() {
+    final dynamic arg = widget.room ?? Get.arguments;
+    final dynamic byParam = Get.parameters.isNotEmpty ? Get.parameters : null;
+    final dynamic effectiveRoom = arg ?? (byParam != null && byParam['id'] != null ? {'id': byParam['id']} : null) ?? {};
+    
+    final isMap = effectiveRoom is Map<String, dynamic>;
+    final int? roomId = widget.roomId ?? 
+      (isMap ? (effectiveRoom['id'] as int?) : (effectiveRoom.id as int?));
+    
+    if (roomId != null) {
+      _contractViewModel.loadActiveContract(roomId);
+    }
+  }
+
   @override
   void dispose() {
     _servicesViewModel.dispose();
+    _contractViewModel.dispose();
     super.dispose();
   }
 
@@ -230,6 +250,7 @@ class _RoomDetailViewState extends State<RoomDetailView> {
                                 final res = await Get.to(() => EditRoomView(room: effectiveRoom));
                                 if (res == true) {
                                   _loadServices();
+                                  _loadContract();
                                   Get.snackbar('Updated', 'Room refreshed');
                                 }
                               },
@@ -361,14 +382,50 @@ class _RoomDetailViewState extends State<RoomDetailView> {
                     const SizedBox(height: 18),
                     Text('Tenant Information', style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
-                    if (currentContract == null)
-                      const Text('No tenant')
-                    else ...[
-                      _buildTenantRow('Identify ID', currentContract['identify_id'] ?? ''),
-                      _buildTenantRow('Name', currentContract['name'] ?? ''),
-                      _buildTenantRow('Phone Number', currentContract['phone'] ?? ''),
-                      _buildTenantRow('Move In date', currentContract['move_in_date'] ?? ''),
-                    ],
+                    ChangeNotifierProvider.value(
+                      value: _contractViewModel,
+                      child: Consumer<ContractViewModel>(
+                        builder: (context, viewModel, child) {
+                          if (viewModel.isLoading) {
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          }
+
+                          if (viewModel.error != null) {
+                            return Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                'Error loading tenant info',
+                                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                              ),
+                            );
+                          }
+
+                          if (!viewModel.hasContract) {
+                            return const Text('No tenant');
+                          }
+
+                          final contract = viewModel.contract!;
+                          final tenant = contract.tenant;
+                          final startDate = contract.startDate.toString().split(' ')[0];
+
+                          return Column(
+                            children: [
+                              _buildTenantRow('Identify ID', tenant.identifyId ?? '-'),
+                              _buildTenantRow('Name', tenant.name),
+                              _buildTenantRow('Phone Number', tenant.phoneNumber ?? tenant.email ?? '-'),
+                              _buildTenantRow('Move In date', startDate),
+                              _buildTenantRow('Deposit', '\$${contract.depositAmount.toStringAsFixed(0)}'),
+                              _buildTenantRow('Status', contract.status),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
                     const Spacer(),
                     Align(
                       alignment: Alignment.centerRight,
