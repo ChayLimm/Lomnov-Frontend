@@ -1,3 +1,4 @@
+import 'package:app/data/services/rooms_service/fetch_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
@@ -8,7 +9,6 @@ import 'package:app/Presentation/provider/contract_viewmodel.dart';
 import 'package:app/data/implementations/rooms/room_services_repository_impl.dart';
 import 'package:app/data/implementations/contract/contract_repository_impl.dart';
 
-// A detail view for a single room. Accepts either a domain model or raw Map.
 class RoomDetailView extends StatefulWidget {
   final dynamic room; // RoomModel or Map<String, dynamic>
   final int? roomId;
@@ -24,14 +24,40 @@ class RoomDetailView extends StatefulWidget {
 class _RoomDetailViewState extends State<RoomDetailView> {
   late RoomServicesViewModel _servicesViewModel;
   late ContractViewModel _contractViewModel;
+  String _apiStatus = '';
+  bool _loadingRoom = false;
 
   @override
   void initState() {
     super.initState();
     _servicesViewModel = RoomServicesViewModel(RoomServicesRepositoryImpl());
     _contractViewModel = ContractViewModel(ContractRepositoryImpl());
+    _loadRoom();
     _loadServices();
     _loadContract();
+  }
+
+  Future<void> _loadRoom() async {
+    // Determine room id from widget/route
+    final dynamic arg = widget.room ?? Get.arguments;
+    final dynamic byParam = Get.parameters.isNotEmpty ? Get.parameters : null;
+    final dynamic effectiveRoom = arg ?? (byParam != null && byParam['id'] != null ? {'id': byParam['id']} : null) ?? {};
+
+    final isMap = effectiveRoom is Map<String, dynamic>;
+    final int? roomId = widget.roomId ?? (isMap ? (effectiveRoom['id'] as int?) : (effectiveRoom.id as int?));
+
+    if (roomId == null) return;
+    setState(() => _loadingRoom = true);
+    try {
+      final svc = RoomFetchService();
+      final dto = await svc.fetchRoomById(roomId);
+      // Prefer API-provided status
+      _apiStatus = (dto.status ?? '').toString();
+    } catch (_) {
+      // keep existing fallback if API fails
+    } finally {
+      if (mounted) setState(() => _loadingRoom = false);
+    }
   }
 
   void _loadServices() {
@@ -147,7 +173,9 @@ class _RoomDetailViewState extends State<RoomDetailView> {
       return 'Unpaid';
     }
 
-    final statusLabel = (status.isNotEmpty ? status : 'Available').toLowerCase();
+    // Use API status if available; fall back to passed-in room status; default to Available
+    final effectiveStatus = _apiStatus.isNotEmpty ? _apiStatus : status;
+    final statusLabel = (effectiveStatus.isNotEmpty ? effectiveStatus : 'Available').toLowerCase();
 
     Widget imgPlaceholder() => Container(
           color: Colors.grey.shade300,
@@ -184,7 +212,13 @@ class _RoomDetailViewState extends State<RoomDetailView> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F8),
       extendBodyBehindAppBar: true,
-      body: Stack(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await _loadRoom();
+          _loadServices();
+          _loadContract();
+        },
+        child: Stack(
         children: [
           SizedBox(
             height: 230,
@@ -228,6 +262,13 @@ class _RoomDetailViewState extends State<RoomDetailView> {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            if (_loadingRoom)
+                              const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            if (!_loadingRoom)
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
@@ -249,9 +290,9 @@ class _RoomDetailViewState extends State<RoomDetailView> {
                               onTap: () async {
                                 final res = await Get.to(() => EditRoomView(room: effectiveRoom));
                                 if (res == true) {
+                                  await _loadRoom();
                                   _loadServices();
                                   _loadContract();
-                                  Get.snackbar('Updated', 'Room refreshed');
                                 }
                               },
                               borderRadius: BorderRadius.circular(8),
@@ -444,6 +485,7 @@ class _RoomDetailViewState extends State<RoomDetailView> {
             ),
           ),
         ],
+        ),
       ),
     );
   }
