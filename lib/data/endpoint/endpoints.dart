@@ -48,6 +48,10 @@ class Endpoints {
   static const String roomTypes = '/api/room-types';
   static String roomTypeById(int id) => '/api/room-types/$id';
   
+  // Roles
+  static const String roles = '/api/roles';
+  static String roleById(int id) => '/api/roles/$id';
+  
 
   // Normalize and validate BASE_URL from environment
   static String _computeBaseUrl() {
