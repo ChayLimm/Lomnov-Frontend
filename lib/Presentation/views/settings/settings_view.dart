@@ -51,8 +51,9 @@ class SettingsView extends StatelessWidget {
             children: [
               _Tile(icon: Icons.lightbulb_outline, label: 'Services', onTap: () => Get.to(() => const ServiceView())),
               const _Tile(icon: Icons.account_balance_wallet_outlined, label: 'Account Bakong'),
-              const _Tile(icon: Icons.rule_folder_outlined, label: 'Rules'),
+              _Tile(icon: Icons.person, label: 'Roles', onTap: () => Get.toNamed('/roles')),
               _Tile(icon: Icons.room_service_outlined, label: 'Room Types', onTap: () => Get.to(() => const RoomTypeView())),
+              _Tile(icon: Icons.tips_and_updates_sharp, label: 'Users')
             ],
           ),
           const SizedBox(height: 12),
