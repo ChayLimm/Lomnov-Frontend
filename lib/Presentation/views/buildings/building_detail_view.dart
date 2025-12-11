@@ -74,7 +74,7 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
   Widget build(BuildContext context) {
     return Scaffold(
     backgroundColor: const Color(0xFFF8F8F8),
-    extendBodyBehindAppBar: true, // image can go behind the status bar
+    extendBodyBehindAppBar: true, 
     body: _loading
         ? const Center(child: CircularProgressIndicator())
         : _error != null
@@ -211,12 +211,9 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
                                   backgroundColor: AppColors.primaryColor,
                                 ),
                                 onPressed: () async {
-                                  // Open the Add Room form and refresh on success
-                                  final res = await Get.to(() => AddRoomView(buildingId: b.id));
-                                  if (res == true) {
-                                    // Re-fetch building to update rooms list
-                                    await _load();
-                                  }
+                                  // Open the Add Room form and always refresh on return
+                                  await Get.to(() => AddRoomView(buildingId: b.id));
+                                  await _load();
                                 },
                                 icon: const Icon(Icons.add),
                                 label: const Text('Add'),
@@ -299,17 +296,15 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
                       floorLabel: floorLabel,
                       status: statusLabel,
                       onTap: () async {
-                        // Navigate to room detail view (supports Map or domain model)
-                        final res = await Get.to(() => RoomDetailView(room: r));
-                        if (res == true) {
-                          await _load();
-                        }
+                        // Navigate to room detail view (supports Map or domain model) and always refresh when back
+                        await Get.to(() => RoomDetailView(room: r));
+                        await _load();
                       },
                       onMenuSelected: (value) async {
                         // Actions for menu.
                         if (value == 'edit') {
-                          final res = await Get.to(() => EditRoomView(room: r));
-                          if (res == true) await _load();
+                          await Get.to(() => EditRoomView(room: r));
+                          await _load();
                         } else if (value == 'delete') {
                           await _confirmAndDelete(r);
                         }

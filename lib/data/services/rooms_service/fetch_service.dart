@@ -87,6 +87,30 @@ class RoomFetchService extends ApiBase {
     return RoomsResponse(items: items, pagination: pagination);
   }
 
+  /// Fetch a single room by id using GET /api/rooms/{id}
+  Future<RoomDto> fetchRoomById(int roomId) async {
+    final uri = buildUri('/api/rooms/$roomId');
+    final headers = await buildHeaders();
+
+    dev.log('[HTTP] GET $uri');
+
+    final response = await HttpErrorHandler.executeRequest(
+      () => httpClient.get(uri, headers: headers),
+    );
+
+    final decoded = HttpErrorHandler.handleResponse(
+      response,
+      'Failed to load room',
+    );
+
+    if (decoded is Map<String, dynamic>) {
+      final data = decoded['data'] ?? decoded['room'] ?? decoded;
+      if (data is Map<String, dynamic>) return RoomDto.fromJson(data);
+    }
+
+    throw Exception('Unexpected response when fetching room');
+  }
+
   /// Delete a room by id using DELETE /api/rooms/{id}
   /// Throws on failure via HttpErrorHandler
   Future<void> deleteRoom(int roomId) async {

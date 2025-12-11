@@ -434,7 +434,7 @@ class _RoomFormViewState extends State<RoomFormView> {
   }
 
   Future<void> _openStatusPicker() async {
-    const statuses = ['Available', 'Occupied', 'Maintenance'];
+    const statuses = ['Available', 'Unpaid', 'Pending', 'Paid'];
     int initialIndex = 0;
     if (_statusCtrl.text.isNotEmpty) {
       final current =
