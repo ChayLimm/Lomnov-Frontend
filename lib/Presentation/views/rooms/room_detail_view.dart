@@ -52,7 +52,7 @@ class _RoomDetailViewState extends State<RoomDetailView> {
       final svc = RoomFetchService();
       final dto = await svc.fetchRoomById(roomId);
       // Prefer API-provided status
-      _apiStatus = (dto.status ?? '').toString();
+      _apiStatus = (dto.status).toString();
     } catch (_) {
       // keep existing fallback if API fails
     } finally {
