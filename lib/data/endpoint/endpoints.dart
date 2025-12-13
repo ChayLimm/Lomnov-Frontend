@@ -43,6 +43,7 @@ class Endpoints {
   // Services (settings)
   static const String services = '/api/services';
   static String serviceById(int id) => '/api/services/$id';
+  static String servicesByLandlord(int landlordId) => '/api/services/landlord/$landlordId';
   
   // Room types
   static const String roomTypes = '/api/room-types';
