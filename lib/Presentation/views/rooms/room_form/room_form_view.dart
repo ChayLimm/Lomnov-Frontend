@@ -141,7 +141,7 @@ class _RoomFormViewState extends State<RoomFormView> {
   Future<void> _loadServices() async {
     try {
       final servicesSvc = ServicesService();
-      final allServiceDtos = await servicesSvc.fetchAll();
+      final allServiceDtos = await servicesSvc.fetchByLandlord();
 
       if (widget.isEdit && _roomId != null) {
         final roomServicesSvc = RoomServicesService();
