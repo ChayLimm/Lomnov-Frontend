@@ -40,6 +40,9 @@ class Endpoints {
   static const String notificationsUnread = '/api/notifications/unread';
   static const String sendReminders = '/api/invoices/send-reminders';
   
+  // Reports
+  static const String reports = '/api/reports';
+  
   // Services (settings)
   static const String services = '/api/services';
   static String serviceById(int id) => '/api/services/$id';

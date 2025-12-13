@@ -13,7 +13,7 @@ class ReportView extends StatefulWidget {
 }
 
 class _ReportViewState extends State<ReportView> {
-  final ReportsService _service = MockReportsService();
+  final ReportsService _service = ApiReportsService();
   String _period = 'Monthly';
   ReportData? _data;
   bool _loading = false;
