@@ -30,6 +30,36 @@ class ServicesService extends ApiBase {
     return ServiceDto.fromJsonList(list);
   }
 
+  Future<List<ServiceDto>> fetchByLandlord({int? landlordId}) async {
+    final int? landlord = landlordId ?? await auth.getLandlordId();
+    if (landlord == null) {
+      throw Exception('No landlord id available');
+    }
+
+    final uri = buildUri(Endpoints.servicesByLandlord(landlord));
+    final headers = await buildHeaders();
+
+    dev.log('[HTTP] GET $uri');
+
+    final response = await HttpErrorHandler.executeRequest(() => httpClient.get(uri, headers: headers));
+
+    final decoded = HttpErrorHandler.handleListResponse(response, 'Failed to load services');
+
+    List<dynamic>? list;
+    if (decoded is List) {
+      list = decoded;
+    } else if (decoded is Map<String, dynamic>) {
+      if (decoded['data'] is List) {
+        list = decoded['data'] as List;
+      } else if (decoded['services'] is List) {
+        list = decoded['services'] as List;
+      }
+    }
+    list ??= const [];
+
+    return ServiceDto.fromJsonList(list);
+  }
+
   Future<ServiceDto> store(Map<String, dynamic> payload) async {
     final uri = buildUri(Endpoints.services);
     final headers = await buildHeaders();

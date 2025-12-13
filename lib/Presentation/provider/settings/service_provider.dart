@@ -16,11 +16,12 @@ class ServiceState extends ChangeNotifier {
   String? get error => _error;
   List<ServiceModel> get items => _items;
 
-  Future<void> load() async {
+  Future<void> load({int? landlordId}) async {
     _setLoading(true);
     _error = null;
     try {
-      final List<ServiceDto> dtos = await _service.fetchAll();
+      // Prefer landlord-scoped fetch when possible
+      final List<ServiceDto> dtos = await _service.fetchByLandlord(landlordId: landlordId);
       _items = dtos.map((d) => d.toDomain()).toList(growable: false);
     } catch (e) {
       _error = e.toString();
@@ -32,10 +33,12 @@ class ServiceState extends ChangeNotifier {
   Future<void> add(String name, double? unitPrice, String? description) async {
     _setLoading(true);
     try {
+      final landlordId = await _service.auth.getLandlordId();
       final payload = {
         'name': name,
         if (unitPrice != null) 'unit_price': unitPrice,
         if (description != null) 'description': description,
+        if (landlordId != null) 'landlord_id': landlordId,
       };
       final dto = await _service.store(payload);
       _items = [dto.toDomain(), ..._items];
