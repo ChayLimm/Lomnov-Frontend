@@ -8,6 +8,7 @@ import 'package:app/Presentation/provider/room_services_viewmodel.dart';
 import 'package:app/Presentation/provider/contract_viewmodel.dart';
 import 'package:app/data/implementations/rooms/room_services_repository_impl.dart';
 import 'package:app/data/implementations/contract/contract_repository_impl.dart';
+import 'package:app/Presentation/views/contracts/add_contract_view.dart';
 
 class RoomDetailView extends StatefulWidget {
   final dynamic room; // RoomModel or Map<String, dynamic>

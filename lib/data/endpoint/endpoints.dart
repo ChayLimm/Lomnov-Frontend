@@ -20,8 +20,7 @@ class Endpoints {
   // Buildings
   static const String buildings = '/api/buildings';
   static String buildingById(int id) => '/api/buildings/$id';
-  static String buildingsByLandlord(int landlordId) =>
-      '/api/buildings/landlord/$landlordId';
+  static String buildingsByLandlord(int landlordId) =>'/api/buildings/landlord/$landlordId';
   static const String buildingPicturesUpload = '/api/images/upload';
 
   //rooms
@@ -32,6 +31,10 @@ class Endpoints {
       '/api/rooms/$roomId/services/$serviceId';
   static String roomActiveContract(int roomId) =>
       '/api/rooms/$roomId/activeContract';
+
+  // Contracts
+  static String contracts() => '/api/contracts';
+  static String contractById(int id) => '/api/contracts/$id';
 
   // Dashboard / Home
   static const String dashboardSummary = '/api/dashboard/summary';

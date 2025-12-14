@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:app/domain/models/building_model/building_model.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
+import 'package:app/data/services/auth_service/auth_service.dart';
+import 'package:http/http.dart' as http;
+import 'dart:typed_data';
 
 class BuildingCard extends StatelessWidget {
   final BuildingModel building;
@@ -44,11 +47,7 @@ class BuildingCard extends StatelessWidget {
                   width: 135,
                   height: 135,
                   child: hasImage
-                      ? Image.network(
-                          b.imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => _placeholder(),
-                        )
+                      ? _AuthImage(url: b.imageUrl)
                       : _placeholder(),
                 ),
               ),
@@ -174,6 +173,63 @@ class BuildingCard extends StatelessWidget {
           child: const Center(child: Icon(Icons.image_not_supported_outlined)),
         ),
       );
+}
+
+class _AuthImage extends StatelessWidget {
+  final String url;
+  const _AuthImage({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    // Try render directly; if it fails due to auth, fetch with headers
+    return FutureBuilder<Uint8List?>(
+      future: _fetchBytes(url),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(color: Theme.of(context).dividerColor.withValues(alpha: 0.15));
+        }
+        if (snapshot.hasError) {
+          return _localPlaceholder(context);
+        }
+        final bytes = snapshot.data;
+        if (bytes == null || bytes.isEmpty) {
+          // Fallback to network widget (public images)
+          return Image.network(
+            url,
+            fit: BoxFit.cover,
+            errorBuilder: (ctx, obj, stack) => _localPlaceholder(ctx),
+          );
+        }
+        return Image.memory(bytes, fit: BoxFit.cover);
+      },
+    );
+  }
+
+  Future<Uint8List?> _fetchBytes(String u) async {
+    try {
+      final auth = AuthService();
+      final token = await auth.getToken();
+      final headers = <String, String>{
+        'Accept': 'image/*,application/octet-stream,application/json',
+        'ngrok-skip-browser-warning': 'true',
+      };
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+      final resp = await http.get(Uri.parse(u), headers: headers);
+      if (resp.statusCode >= 200 && resp.statusCode < 300) {
+        return resp.bodyBytes;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Widget _localPlaceholder(BuildContext context) {
+    return Container(
+      color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
+      child: const Center(child: Icon(Icons.image_not_supported_outlined)),
+    );
+  }
 }
 
 class _Pill extends StatelessWidget {

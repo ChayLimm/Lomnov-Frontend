@@ -32,6 +32,21 @@ class TenantDto {
   });
 
   factory TenantDto.fromJson(Map<String, dynamic> json) {
+    // Some APIs use first_name/last_name and phone instead of name/phonenumber.
+    final String? firstName = json['first_name'] as String?;
+    final String? lastName = json['last_name'] as String?;
+    final String? name = json['name'] as String?;
+    final String composedName =
+        (name ??
+                [
+                  firstName,
+                  lastName,
+                ].where((e) => e != null && e!.isNotEmpty).join(' '))
+            .trim();
+
+    final String? phone = json['phone'] as String?;
+    final String? phonenumber = json['phonenumber'] as String?;
+
     return TenantDto(
       id: json['id'] as int? ?? 0,
       landlordId: json['landlord_id'] as int?,
@@ -62,8 +77,12 @@ class TenantDto {
       identifyImageUrl: identifyImageUrl,
       username: null, // Not in your JSON
       telegramId: telegramId,
-      createdAt: createdAt.isNotEmpty ? DateTime.parse(createdAt) : DateTime.now(),
-      updatedAt: updatedAt.isNotEmpty ? DateTime.parse(updatedAt) : DateTime.now(),
+      createdAt: createdAt.isNotEmpty
+          ? DateTime.parse(createdAt)
+          : DateTime.now(),
+      updatedAt: updatedAt.isNotEmpty
+          ? DateTime.parse(updatedAt)
+          : DateTime.now(),
     );
   }
 }
