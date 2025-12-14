@@ -12,6 +12,7 @@ import 'package:app/data/services/auth_service/auth_service.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:app/Presentation/widgets/gradient_button.dart';
+import 'package:app/data/dto/building_dto.dart';
 
 class AddBuildingView extends StatefulWidget {
   final int? initialLandlordId;
@@ -50,6 +51,8 @@ class _AddBuildingViewState extends State<AddBuildingView> {
   final _repository = BuildingRepositoryImpl();
 
   bool _submitting = false;
+  Uint8List? _selectedImageBytes;
+  String? _selectedImageFileName;
 
   @override
   void initState() {
@@ -103,36 +106,130 @@ class _AddBuildingViewState extends State<AddBuildingView> {
       }
       landlordId ??= context.read<AuthViewModel>().user?.id;
       if (widget.editingBuildingId != null) {
-        // Edit mode - send update
-        final updated = await _repository.updateBuilding(
-          id: widget.editingBuildingId!,
-          landlordId: landlordId,
-          name: _nameCtrl.text.trim(),
-          address: _addressCtrl.text.trim(),
-          imageUrl: _imageUrlCtrl.text.trim().isEmpty ? null : _imageUrlCtrl.text.trim(),
-          floor: floor,
-          unit: unit,
-        );
+        // Edit mode - send update; if image selected, PATCH multipart
+        if (_selectedImageBytes != null && _selectedImageBytes!.isNotEmpty) {
+          final uri = Endpoints.uri(Endpoints.buildingById(widget.editingBuildingId!));
+          // Some backends don't accept PATCH with multipart; use POST + _method=PATCH
+          final req = http.MultipartRequest('POST', uri);
+                    // Method spoofing for PATCH semantics
+                    req.fields['_method'] = 'PATCH';
+          final token = await AuthService().getToken();
+          if (token != null && token.isNotEmpty) {
+            req.headers['Authorization'] = 'Bearer $token';
+          }
+          req.headers['Accept'] = 'application/json';
+          req.headers['ngrok-skip-browser-warning'] = 'true';
 
-        if (!mounted) return;
-        Get.back(result: updated);
-        Get.snackbar('Success', 'Building updated');
+          if (landlordId != null) req.fields['landlord_id'] = landlordId.toString();
+          req.fields['name'] = _nameCtrl.text.trim();
+          req.fields['address'] = _addressCtrl.text.trim();
+          req.fields['floor'] = floor.toString();
+          req.fields['unit'] = unit.toString();
+          if (_imageUrlCtrl.text.trim().isNotEmpty) {
+            req.fields['imageUrl'] = _imageUrlCtrl.text.trim();
+          }
+
+          req.files.add(http.MultipartFile.fromBytes(
+            'image',
+            _selectedImageBytes!,
+            filename: _selectedImageFileName ?? 'image.jpg',
+          ));
+
+          final streamed = await req.send();
+          final resp = await http.Response.fromStream(streamed);
+          if (resp.statusCode >= 200 && resp.statusCode < 300) {
+            final dynamic decoded = resp.body.isEmpty ? null : jsonDecode(resp.body);
+            BuildingDto dto;
+            if (decoded is Map<String, dynamic>) {
+              dto = BuildingDto.fromJson(decoded);
+            } else if (decoded is List && decoded.isNotEmpty && decoded.first is Map) {
+              dto = BuildingDto.fromJson(decoded.first as Map<String, dynamic>);
+            } else {
+              throw Exception('Unexpected update response format');
+            }
+            if (!mounted) return;
+            Get.back(result: dto.toDomain());
+            Get.snackbar('Success', 'Building updated');
+          } else {
+            throw Exception('Update failed (${resp.statusCode})');
+          }
+        } else {
+          // No image: use repository JSON update
+          final updated = await _repository.updateBuilding(
+            id: widget.editingBuildingId!,
+            landlordId: landlordId,
+            name: _nameCtrl.text.trim(),
+            address: _addressCtrl.text.trim(),
+            imageUrl: _imageUrlCtrl.text.trim().isEmpty ? null : _imageUrlCtrl.text.trim(),
+            floor: floor,
+            unit: unit,
+          );
+
+          if (!mounted) return;
+          Get.back(result: updated);
+          Get.snackbar('Success', 'Building updated');
+        }
       } else {
         // Create mode
-        final created = await _repository.createBuilding(
-          landlordId: landlordId,
-          name: _nameCtrl.text.trim(),
-          address: _addressCtrl.text.trim(),
-          imageUrl: _imageUrlCtrl.text.trim().isEmpty ? null : _imageUrlCtrl.text.trim(),
-          floor: floor,
-          unit: unit,
-        );
+        // If an image was selected, send as multipart together with fields
+        if (_selectedImageBytes != null && _selectedImageBytes!.isNotEmpty) {
+          final uri = Endpoints.uri(Endpoints.buildings);
+          final req = http.MultipartRequest('POST', uri);
+          final token = await AuthService().getToken();
+          if (token != null && token.isNotEmpty) {
+            req.headers['Authorization'] = 'Bearer $token';
+          }
+          req.headers['Accept'] = 'application/json';
+          req.headers['ngrok-skip-browser-warning'] = 'true';
 
-        if (!mounted) return;
+          if (landlordId != null) req.fields['landlord_id'] = landlordId.toString();
+          req.fields['name'] = _nameCtrl.text.trim();
+          req.fields['address'] = _addressCtrl.text.trim();
+          req.fields['floor'] = floor.toString();
+          req.fields['unit'] = unit.toString();
+          if (_imageUrlCtrl.text.trim().isNotEmpty) {
+            req.fields['imageUrl'] = _imageUrlCtrl.text.trim();
+          }
 
-        // Return created model to previous screen
-        Get.back(result: created);
-        Get.snackbar('Success', 'Building created');
+          req.files.add(http.MultipartFile.fromBytes(
+            'image',
+            _selectedImageBytes!,
+            filename: _selectedImageFileName ?? 'image.jpg',
+          ));
+
+          final streamed = await req.send();
+          final resp = await http.Response.fromStream(streamed);
+          if (resp.statusCode >= 200 && resp.statusCode < 300) {
+            final dynamic decoded = resp.body.isEmpty ? null : jsonDecode(resp.body);
+            BuildingDto dto;
+            if (decoded is Map<String, dynamic>) {
+              dto = BuildingDto.fromJson(decoded);
+            } else if (decoded is List && decoded.isNotEmpty && decoded.first is Map) {
+              dto = BuildingDto.fromJson(decoded.first as Map<String, dynamic>);
+            } else {
+              throw Exception('Unexpected create response format');
+            }
+            if (!mounted) return;
+            Get.back(result: dto.toDomain());
+            Get.snackbar('Success', 'Building created');
+          } else {
+            throw Exception('Create failed (${resp.statusCode})');
+          }
+        } else {
+          // No image selected: use repository
+          final created = await _repository.createBuilding(
+            landlordId: landlordId,
+            name: _nameCtrl.text.trim(),
+            address: _addressCtrl.text.trim(),
+            imageUrl: _imageUrlCtrl.text.trim().isEmpty ? null : _imageUrlCtrl.text.trim(),
+            floor: floor,
+            unit: unit,
+          );
+
+          if (!mounted) return;
+          Get.back(result: created);
+          Get.snackbar('Success', 'Building created');
+        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -247,6 +344,10 @@ class _AddBuildingViewState extends State<AddBuildingView> {
                               const SizedBox(height: 16),
                               _ImagePickerPlaceholder(
                                 controller: _imageUrlCtrl,
+                                onFileSelected: (bytes, filename) {
+                                  _selectedImageBytes = bytes;
+                                  _selectedImageFileName = filename;
+                                },
                               ),
                             ],
                           ),
@@ -415,7 +516,8 @@ class _NumberDropdownFieldState extends State<_NumberDropdownField> {
 /// with an icon and hint. For now it binds to a text controller for image URL.
 class _ImagePickerPlaceholder extends StatefulWidget {
   final TextEditingController controller;
-  const _ImagePickerPlaceholder({required this.controller});
+  final void Function(Uint8List bytes, String filename)? onFileSelected;
+  const _ImagePickerPlaceholder({required this.controller, this.onFileSelected});
 
   @override
   State<_ImagePickerPlaceholder> createState() => _ImagePickerPlaceholderState();
@@ -440,59 +542,12 @@ class _ImagePickerPlaceholderState extends State<_ImagePickerPlaceholder> {
       _previewBytes = file.bytes;
       _fileName = file.name;
     });
-    // Upload the bytes to the backend and store the returned URL
-    if (file.bytes != null && file.bytes!.isNotEmpty) {
-      await _uploadToServer(file.bytes!, file.name);
+    // Defer upload; let parent submit together with building data
+    if (file.bytes != null && file.bytes!.isNotEmpty && widget.onFileSelected != null) {
+      widget.onFileSelected!(file.bytes!, file.name);
     }
   }
-
-  Future<void> _uploadToServer(Uint8List bytes, String filename) async {
-    setState(() => _uploading = true);
-    try {
-      final uri = Endpoints.uri(Endpoints.buildingPicturesUpload);
-      final req = http.MultipartRequest('POST', uri);
-      // Attach auth header if present and common headers
-      final token = await _auth.getToken();
-      if (token != null && token.isNotEmpty) {
-        req.headers['Authorization'] = 'Bearer $token';
-      }
-      req.headers['Accept'] = 'application/json';
-      req.headers['ngrok-skip-browser-warning'] = 'true';
-
-      // Field name commonly used by backends: "image"
-      req.files.add(http.MultipartFile.fromBytes(
-        'image',
-        bytes,
-        filename: filename,
-      ));
-
-      final streamed = await req.send();
-      final resp = await http.Response.fromStream(streamed);
-
-      if (resp.statusCode >= 200 && resp.statusCode < 300) {
-        final url = _extractUrl(resp.body);
-        if (url != null && url.isNotEmpty) {
-          widget.controller.text = url;
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Image uploaded')),
-            );
-          }
-        } else {
-          throw Exception('Upload succeeded but no URL returned');
-        }
-      } else {
-        throw Exception('Upload failed (${resp.statusCode})');
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    } finally {
-      if (mounted) setState(() => _uploading = false);
-    }
-  }
+  
 
   String? _extractUrl(String body) {
     // Try parse a few common response shapes

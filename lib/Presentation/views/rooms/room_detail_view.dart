@@ -8,6 +8,7 @@ import 'package:app/Presentation/provider/room_services_viewmodel.dart';
 import 'package:app/Presentation/provider/contract_viewmodel.dart';
 import 'package:app/data/implementations/rooms/room_services_repository_impl.dart';
 import 'package:app/data/implementations/contract/contract_repository_impl.dart';
+import 'package:app/Presentation/views/contracts/add_contract_view.dart';
 
 class RoomDetailView extends StatefulWidget {
   final dynamic room; // RoomModel or Map<String, dynamic>
@@ -472,8 +473,22 @@ class _RoomDetailViewState extends State<RoomDetailView> {
                       alignment: Alignment.centerRight,
                       child: FilledButton.icon(
                         style: FilledButton.styleFrom(backgroundColor: AppColors.primaryColor),
-                        onPressed: () {
-                          Get.snackbar('Contract', 'Open contract view');
+                        onPressed: () async {
+                          final dynamic arg = widget.room ?? Get.arguments;
+                          final dynamic byParam = Get.parameters.isNotEmpty ? Get.parameters : null;
+                          final dynamic effectiveRoom = arg ?? (byParam != null && byParam['id'] != null ? {'id': byParam['id']} : null) ?? {};
+                          final isMap = effectiveRoom is Map<String, dynamic>;
+                          final int? roomId = widget.roomId ?? (isMap ? (effectiveRoom['id'] as int?) : (effectiveRoom.id as int?));
+                          if (roomId == null) {
+                            Get.snackbar('Contract', 'Room ID not found');
+                            return;
+                          }
+                          final res = await Get.to(() => AddContractView(roomId: roomId));
+                          if (res == true) {
+                            await _loadRoom();
+                            _loadServices();
+                            _loadContract();
+                          }
                         },
                         icon: const Icon(Icons.receipt_long),
                         label: const Text('Contract'),
