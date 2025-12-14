@@ -43,6 +43,9 @@ class Endpoints {
   static const String notificationsUnread = '/api/notifications/unread';
   static const String sendReminders = '/api/invoices/send-reminders';
   
+  // Reports
+  static const String reports = '/api/reports';
+  
   // Services (settings)
   static const String services = '/api/services';
   static String serviceById(int id) => '/api/services/$id';
@@ -55,6 +58,11 @@ class Endpoints {
   // Roles
   static const String roles = '/api/roles';
   static String roleById(int id) => '/api/roles/$id';
+  
+  // Consumptions
+  static String consumptionsByRoom(int roomId) => '/api/consumptions/room/$roomId';
+  static const String consumptions = '/api/consumptions';
+  static String consumptionById(int id) => '/api/consumptions/$id';
   
 
   // Normalize and validate BASE_URL from environment
