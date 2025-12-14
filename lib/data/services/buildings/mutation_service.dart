@@ -46,10 +46,10 @@ class BuildingMutationService extends ApiBase {
     addIfNonNull('floor', floor);
     addIfNonNull('unit', unit);
 
-    dev.log('[HTTP] PUT $uri body=${jsonEncode(payload)}');
+    dev.log('[HTTP] PATCH $uri body=${jsonEncode(payload)}');
 
     final response = await HttpErrorHandler.executeRequest(
-      () => httpClient.put(uri, headers: headers, body: jsonEncode(payload)),
+      () => httpClient.patch(uri, headers: headers, body: jsonEncode(payload)),
     );
 
     final decoded = HttpErrorHandler.handleResponse(

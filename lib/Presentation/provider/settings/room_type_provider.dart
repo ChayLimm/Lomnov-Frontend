@@ -32,9 +32,11 @@ class RoomTypeState extends ChangeNotifier {
   Future<void> add(String roomTypeName, String? description) async {
     _setLoading(true);
     try {
+      final landlordId = await _service.auth.getLandlordId();
       final payload = {
         'room_type_name': roomTypeName,
         if (description != null) 'description': description,
+        if (landlordId != null) 'landlord_id': landlordId,
       };
       final dto = await _service.store(payload);
       _items = [dto.toDomain(), ..._items];
@@ -48,9 +50,11 @@ class RoomTypeState extends ChangeNotifier {
   Future<void> update(RoomTypeModel m) async {
     _setLoading(true);
     try {
+      final landlordId = await _service.auth.getLandlordId();
       final payload = {
         'room_type_name': m.roomTypeName,
         'description': m.description,
+        if (landlordId != null) 'landlord_id': landlordId,
       };
       final dto = await _service.update(m.id, payload);
       _items = _items.map((x) => x.id == m.id ? dto.toDomain() : x).toList(growable: false);
