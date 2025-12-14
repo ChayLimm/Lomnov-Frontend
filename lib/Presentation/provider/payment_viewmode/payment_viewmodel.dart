@@ -2,9 +2,11 @@ import 'dart:developer';
 
 import 'package:app/data/dto/building_dto.dart';
 import 'package:app/data/dto/room_dto.dart';
+import 'package:app/data/dto/service_dto.dart';
 import 'package:app/data/services/auth_service/auth_service.dart';
 import 'package:app/data/services/building_service.dart';
 import 'package:app/data/services/rooms_service/fetch_service.dart';
+import 'package:app/data/services/rooms_service/room_services_service.dart';
 import 'package:app/domain/models/building_model/building_model.dart';
 import 'package:app/domain/models/settings/service_model.dart';
 import 'package:app/domain/models/user_model/user_model.dart';
@@ -13,6 +15,7 @@ import 'package:flutter/material.dart';
 class PaymentViewModel extends ChangeNotifier {
   final BuildingService buildingService = BuildingService();
   final RoomFetchService roomService = RoomFetchService();
+  final RoomServicesService roomServiceService = RoomServicesService();
   final AuthService authService = AuthService();
 
   int? landlord_id = 0;
@@ -29,6 +32,9 @@ class PaymentViewModel extends ChangeNotifier {
 
   BuildingModel? _selectedBuilding;
   RoomModel? _selectedRoom;
+  List<ServiceDto> roomServices = []; 
+  double? water = 0;
+  double? electricity  = 0;
 
   bool get isLoading => _isLoading;
   // In PaymentViewModel class
@@ -38,14 +44,22 @@ class PaymentViewModel extends ChangeNotifier {
   // Add room selection method
   RoomModel? selectedRoom;
 
-  void selectRoom(RoomModel? room) {
+  void selectRoom(RoomModel? room) async {
     selectedRoom = room;
+    await loadRoomService();
     notifyListeners();
   }
 
   Future<void> loadRoomService() async {
+    print("Loading services");
+    if(selectedRoom != null){
+      print("Start fetching serivces");
+      roomServices = await roomServiceService.fetchRoomServices(selectedRoom!.id);
+        print("room serives lenght : ${roomServices.length}");
+    }
     return;
   }
+
 
   // Future<void> loadTenant(){
   //   if(_selectedRoom != null){
@@ -53,6 +67,19 @@ class PaymentViewModel extends ChangeNotifier {
   //   }
   //   return;
   // }
+  void setWater(double data){
+    water = data;
+    notifyListeners();
+  }
+  void setElectricity(double data){
+    electricity = data;
+    notifyListeners();
+  }
+  void tester(){
+    print("RoomID: ${selectedRoom?.id ?? "hark"}");
+    print("water: ${water}");
+    print("electricity: ${electricity}");
+  }
 
   Future<void> loadData() async {
     try {
@@ -122,5 +149,7 @@ class PaymentViewModel extends ChangeNotifier {
     selectedBuilding = selected;
     notifyListeners();
   }
+
+  maps(Null Function(dynamic item) param0) {}
 
 }

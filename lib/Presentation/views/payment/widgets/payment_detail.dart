@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:app/Presentation/provider/payment_viewmode/payment_viewmodel.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:app/Presentation/views/payment/widgets/info_row.dart';
@@ -15,16 +13,37 @@ class PaymentDetail extends StatefulWidget {
 }
 
 class _PaymentDetailState extends State<PaymentDetail> {
+    final _formKey = GlobalKey<FormState>();
+    late TextEditingController _waterController;
+    late TextEditingController _electricityController;
+
+    @override
+    void initState() {
+      super.initState();
+      final provider = context.read<PaymentViewModel>();
+      _waterController = TextEditingController(text: provider.water.toString());
+      _electricityController = TextEditingController(text: provider.electricity.toString(),);
+    }
+
+    @override
+    void dispose() {
+      _waterController.dispose();
+      _electricityController.dispose();
+      super.dispose();
+    }
+
   @override
   Widget build(BuildContext context) {
-    final _formKey = GlobalKey<FormState>();
-    final _buildingController = TextEditingController();
-    final _roomController = TextEditingController();
-    final _waterController = TextEditingController();
-    final _electricityController = TextEditingController();
-
+  
     return Consumer<PaymentViewModel>(
       builder: (context, paymentProvider, child) {
+          if (_waterController.text != paymentProvider.water.toString()) {
+          _waterController.text = paymentProvider.water.toString();
+        }
+        if (_electricityController.text != paymentProvider.electricity.toString()) {
+          _electricityController.text = paymentProvider.electricity.toString();
+        }
+
         return Column(
           children: [
             Container(
@@ -125,8 +144,6 @@ class _PaymentDetailState extends State<PaymentDetail> {
                             onChanged: (RoomModel? newValue) {
                               if (newValue != null) {
                                 paymentProvider.selectRoom(newValue);
-                                // Load rooms for selected building
-                                // paymentProvider.loadRoomFromBuilding(newValue.id ?? 0);
                               }
                             },
                             validator: (value) =>
@@ -172,8 +189,10 @@ class _PaymentDetailState extends State<PaymentDetail> {
                                 ),
                                 const SizedBox(height: 8),
                                 TextFormField(
-                                  controller:
-                                      _waterController, // Changed to different controller
+                                   controller: _waterController,
+                                    onChanged: (value) {
+                                      paymentProvider.setWater(double.tryParse(value) ?? 0);
+                                    },
                                   decoration: InputDecoration(
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(10.0),
@@ -186,13 +205,11 @@ class _PaymentDetailState extends State<PaymentDetail> {
                                         width: 2.0,
                                       ),
                                     ),
-
                                     contentPadding: EdgeInsets.symmetric(
                                       horizontal: 16.0,
                                       vertical: 14.0,
                                     ),
                                   ),
-
                                   validator: (v) =>
                                       (v == null || v.trim().isEmpty)
                                       ? 'Water is required'
@@ -216,6 +233,9 @@ class _PaymentDetailState extends State<PaymentDetail> {
                                 const SizedBox(height: 8),
                                 TextFormField(
                                   controller: _electricityController,
+                                  onChanged: (value) {
+                                    paymentProvider.setElectricity(double.tryParse(value) ?? 0);
+                                  },
                                   decoration: InputDecoration(
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(10.0),
