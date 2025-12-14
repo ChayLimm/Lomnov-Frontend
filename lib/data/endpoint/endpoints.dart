@@ -55,6 +55,11 @@ class Endpoints {
   static const String roles = '/api/roles';
   static String roleById(int id) => '/api/roles/$id';
   
+  // Consumptions
+  static String consumptionsByRoom(int roomId) => '/api/consumptions/room/$roomId';
+  static const String consumptions = '/api/consumptions';
+  static String consumptionById(int id) => '/api/consumptions/$id';
+  
 
   // Normalize and validate BASE_URL from environment
   static String _computeBaseUrl() {
