@@ -1,10 +1,10 @@
-import 'dart:developer';
-
 import 'package:app/data/dto/building_dto.dart';
+import 'package:app/data/dto/contract_dto.dart';
 import 'package:app/data/dto/room_dto.dart';
 import 'package:app/data/dto/service_dto.dart';
 import 'package:app/data/services/auth_service/auth_service.dart';
 import 'package:app/data/services/building_service.dart';
+import 'package:app/data/services/contract_service/contract_service.dart';
 import 'package:app/data/services/rooms_service/fetch_service.dart';
 import 'package:app/data/services/rooms_service/room_services_service.dart';
 import 'package:app/domain/models/building_model/building_model.dart';
@@ -17,6 +17,7 @@ class PaymentViewModel extends ChangeNotifier {
   final RoomFetchService roomService = RoomFetchService();
   final RoomServicesService roomServiceService = RoomServicesService();
   final AuthService authService = AuthService();
+  final ContractService contractService = ContractService();
 
   int? landlord_id = 0;
   bool _isLoading = false;
@@ -24,17 +25,14 @@ class PaymentViewModel extends ChangeNotifier {
   List<BuildingModel> _buildings = [];
   List<RoomModel> _rooms = [];
   UserModel? _tenant;
-  List<ServiceModel> _serviceList = [];
-
+  ContractDto? contract;
 
   BuildingModel? selectedBuilding;
   List<BuildingModel> get buildings => _buildings;
 
-  BuildingModel? _selectedBuilding;
-  RoomModel? _selectedRoom;
-  List<ServiceDto> roomServices = []; 
+  List<ServiceDto> roomServices = [];
   double? water = 0;
-  double? electricity  = 0;
+  double? electricity = 0;
 
   bool get isLoading => _isLoading;
   // In PaymentViewModel class
@@ -44,41 +42,44 @@ class PaymentViewModel extends ChangeNotifier {
   // Add room selection method
   RoomModel? selectedRoom;
 
+  void verifyPayment(){
+    
+  }
+
   void selectRoom(RoomModel? room) async {
     selectedRoom = room;
     await loadRoomService();
+    await fetchActiveContract();
     notifyListeners();
   }
 
   Future<void> loadRoomService() async {
     print("Loading services");
-    if(selectedRoom != null){
+    if (selectedRoom != null) {
       print("Start fetching serivces");
-      roomServices = await roomServiceService.fetchRoomServices(selectedRoom!.id);
-        print("room serives lenght : ${roomServices.length}");
+      roomServices = await roomServiceService.fetchRoomServices(
+        selectedRoom!.id,
+      );
+      print("room serives lenght : ${roomServices.length}");
     }
     return;
   }
 
-
-  // Future<void> loadTenant(){
-  //   if(_selectedRoom != null){
-      
-  //   }
-  //   return;
-  // }
-  void setWater(double data){
+  void setWater(double data) {
     water = data;
     notifyListeners();
   }
-  void setElectricity(double data){
+
+  void setElectricity(double data) {
     electricity = data;
     notifyListeners();
   }
-  void tester(){
+
+  void tester() {
     print("RoomID: ${selectedRoom?.id ?? "hark"}");
     print("water: ${water}");
     print("electricity: ${electricity}");
+    fetchActiveContract();
   }
 
   Future<void> loadData() async {
@@ -108,13 +109,18 @@ class PaymentViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> fetchActiveContract() async {
+    if (selectedRoom != null) {
+      contract = await contractService.fetchActiveContract(selectedRoom!.id);
+    }
+  }
+
   Future<void> loadRoomFromBuilding(int $id) async {
     try {
       _rooms.clear();
       selectRoom(null);
       landlord_id = await authService.getLandlordId();
       if (landlord_id == null) {
-        print("LANORD HAVE NO ID IN PAYMENT DEAITL PROVIDER");
         return;
       }
       final res = await roomService.fetchRooms(buildingId: $id);
@@ -125,7 +131,6 @@ class PaymentViewModel extends ChangeNotifier {
         _rooms.add(temp);
       });
     } catch (error) {
-      print('Error loading buildings: $error');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -137,6 +142,10 @@ class PaymentViewModel extends ChangeNotifier {
     _rooms.clear();
     selectBuilding(null);
     selectRoom(null);
+    roomServices.clear();
+    contract = null;
+    water = 0;
+    electricity=0;
     notifyListeners();
   }
 
@@ -149,7 +158,5 @@ class PaymentViewModel extends ChangeNotifier {
     selectedBuilding = selected;
     notifyListeners();
   }
-
-  maps(Null Function(dynamic item) param0) {}
 
 }

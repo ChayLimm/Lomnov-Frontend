@@ -1,63 +1,69 @@
 import 'package:app/domain/models/contract/tenant_model.dart';
 
-/// Data Transfer Object for tenant information.
 class TenantDto {
   final int id;
-  final String name;
+  final int? landlordId;
+  final String firstName;
+  final String lastName;
   final String? email;
-  final String? phonenumber;
+  final String? phone;
+  final String? telegramId;
   final String? identifyId;
   final String? profileImageUrl;
   final String? identifyImageUrl;
-  final String? username;
-  final String? telegramId;
+  final Map<String, dynamic>? emergencyContact;
   final String createdAt;
   final String updatedAt;
 
   TenantDto({
     required this.id,
-    required this.name,
+    this.landlordId,
+    required this.firstName,
+    required this.lastName,
     this.email,
-    this.phonenumber,
+    this.phone,
+    this.telegramId,
     this.identifyId,
     this.profileImageUrl,
     this.identifyImageUrl,
-    this.username,
-    this.telegramId,
+    this.emergencyContact,
     required this.createdAt,
     required this.updatedAt,
   });
 
   factory TenantDto.fromJson(Map<String, dynamic> json) {
     return TenantDto(
-      id: json['id'] as int,
-      name: json['name'] as String,
+      id: json['id'] as int? ?? 0,
+      landlordId: json['landlord_id'] as int?,
+      firstName: json['first_name'] as String? ?? '',
+      lastName: json['last_name'] as String? ?? '',
       email: json['email'] as String?,
-      phonenumber: json['phonenumber'] as String?,
+      phone: json['phone'] as String?,
+      telegramId: json['telegram_id'] as String?,
       identifyId: json['identify_id'] as String?,
       profileImageUrl: json['profile_image_url'] as String?,
       identifyImageUrl: json['identify_image_url'] as String?,
-      username: json['username'] as String?,
-      telegramId: json['telegram_id'] as String?,
-      createdAt: json['created_at'] as String,
-      updatedAt: json['updated_at'] as String,
+      emergencyContact: json['emergency_contact'] as Map<String, dynamic>?,
+      createdAt: (json['created_at'] as String?) ?? '',
+      updatedAt: (json['updated_at'] as String?) ?? '',
     );
   }
 
-  /// Converts DTO to domain model.
+  String get fullName => '$firstName $lastName';
+
   TenantModel toDomain() {
     return TenantModel(
       id: id,
-      name: name,
+      name: fullName, // Combine first + last
       email: email,
-      phoneNumber: phonenumber,
+      phoneNumber: phone, // Map 'phone' to 'phoneNumber'
       identifyId: identifyId,
       profileImageUrl: profileImageUrl,
       identifyImageUrl: identifyImageUrl,
-      username: username,
+      username: null, // Not in your JSON
       telegramId: telegramId,
-      createdAt: DateTime.parse(createdAt),
-      updatedAt: DateTime.parse(updatedAt),
+      createdAt: createdAt.isNotEmpty ? DateTime.parse(createdAt) : DateTime.now(),
+      updatedAt: updatedAt.isNotEmpty ? DateTime.parse(updatedAt) : DateTime.now(),
     );
   }
 }

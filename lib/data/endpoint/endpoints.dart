@@ -27,10 +27,9 @@ class Endpoints {
   //rooms
   static const String rooms = '/api/rooms';
   static String roomById(int id) => '/api/rooms/$id';
-  static String roomServices(int id) => 'api/rooms/$id/services';
-  // static String roomServices(int roomId) => '/api/rooms/$roomId/services';
-  static String roomServiceById(int roomId, int serviceId) =>
-      '/api/rooms/$roomId/services/$serviceId';
+  static String roomServices(int roomId) => '/api/rooms/$roomId/services';
+  static String roomServiceById(int roomId, int serviceId) => '/api/rooms/$roomId/services/$serviceId';
+  static String roomActiveContract(int roomId) => '/api/rooms/$roomId/activeContract';
 
   // Dashboard / Home
   static const String dashboardSummary = '/api/dashboard/summary';
@@ -40,14 +39,20 @@ class Endpoints {
   static String notificationMarkRead(int id) => '/api/notifications/$id/read';
   static const String notificationsUnread = '/api/notifications/unread';
   static const String sendReminders = '/api/invoices/send-reminders';
-
+  
   // Services (settings)
   static const String services = '/api/services';
   static String serviceById(int id) => '/api/services/$id';
-
+  static String servicesByLandlord(int landlordId) => '/api/services/landlord/$landlordId';
+  
   // Room types
   static const String roomTypes = '/api/room-types';
   static String roomTypeById(int id) => '/api/room-types/$id';
+  
+  // Roles
+  static const String roles = '/api/roles';
+  static String roleById(int id) => '/api/roles/$id';
+  
 
   // Normalize and validate BASE_URL from environment
   static String _computeBaseUrl() {
