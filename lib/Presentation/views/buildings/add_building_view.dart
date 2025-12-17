@@ -621,7 +621,7 @@ class _ImagePickerPlaceholderState extends State<_ImagePickerPlaceholder> {
                   Positioned.fill(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.35),
+                        color: Colors.black.withOpacity(0.35),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Center(

@@ -8,7 +8,7 @@ class BuildingService {
   final _mutate = BuildingMutationService();
 
   /// Fetch buildings, optionally for a specific landlord.
-  Future<List<BuildingDto>> fetchBuildings({int? landlordId}) =>
+  Future<List<BuildingDto>> fetchBuildings(int? landlord_id, {int? landlordId}) =>
       _fetch.fetchBuildingsForLandlord(landlordId: landlordId);
   Future fetchBuildingById(int id) =>
       _fetch.fetchBuildingById(id);
