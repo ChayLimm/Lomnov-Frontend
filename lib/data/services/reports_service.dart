@@ -6,12 +6,12 @@ import 'package:app/data/endpoint/endpoints.dart';
 import 'package:flutter/material.dart';
 
 abstract class ReportsService {
-  Future<ReportData> fetchReport({required String period});
+  Future<ReportData> fetchReport({required String period, required int landlordId});
 }
 
 class MockReportsService implements ReportsService {
   @override
-  Future<ReportData> fetchReport({required String period}) async {
+  Future<ReportData> fetchReport({required String period, required int landlordId}) async {
     await Future.delayed(const Duration(milliseconds: 300));
     return ReportData(
       totalIncome: 2262.50,
@@ -33,8 +33,8 @@ class MockReportsService implements ReportsService {
 
 class ApiReportsService extends ApiBase implements ReportsService {
   @override
-  Future<ReportData> fetchReport({required String period}) async {
-    final uri = buildUri(Endpoints.reports);
+  Future<ReportData> fetchReport({required String period, required int landlordId}) async {
+    final uri = buildUri('/api/reports/$landlordId');
     final headers = await buildHeaders();
 
     final res = await HttpErrorHandler.executeRequest(
