@@ -5,6 +5,10 @@ import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:app/domain/models/report.dart';
 import 'package:app/data/services/reports_service.dart';
 
+
+import 'package:provider/provider.dart';
+import 'package:app/Presentation/provider/auth_viewmodel.dart';
+
 class ReportView extends StatefulWidget {
   const ReportView({super.key});
 
@@ -18,21 +22,29 @@ class _ReportViewState extends State<ReportView> {
   ReportData? _data;
   bool _loading = false;
   String? _error;
+  int? _landlordId;
 
   @override
   void initState() {
     super.initState();
-    // Fetch after first frame to ensure context is ready
-    WidgetsBinding.instance.addPostFrameCallback((_) => _fetch());
+    // Fetch landlordId after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = context.read<AuthViewModel>();
+      setState(() {
+        _landlordId = auth.user?.id;
+      });
+      _fetch();
+    });
   }
 
   Future<void> _fetch() async {
+    if (_landlordId == null) return;
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final d = await _service.fetchReport(period: _period);
+      final d = await _service.fetchReport(period: _period, landlordId: _landlordId!);
       if (!mounted) return;
       setState(() {
         _data = d;

@@ -3,10 +3,11 @@ import 'package:app/domain/models/consumption/consumption.dart';
 class ConsumptionDto {
   final int id;
   final int roomId;
-  final int serviceId;
+  final int? serviceId;
   final double endReading;
   final String photoUrl;
   final double consumption;
+  final String type; // Added type field
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final DateTime? deletedAt;
@@ -15,10 +16,11 @@ class ConsumptionDto {
   const ConsumptionDto({
     required this.id,
     required this.roomId,
-    required this.serviceId,
+    this.serviceId,
     required this.endReading,
     required this.photoUrl,
     required this.consumption,
+    required this.type, // Added to constructor
     this.createdAt,
     this.updatedAt,
     this.deletedAt,
@@ -39,20 +41,27 @@ class ConsumptionDto {
       return null;
     }
 
+    int? _toIntNullable(dynamic v) {
+      if (v == null) return null;
+      if (v is int) return v;
+      if (v is double) return v.toInt();
+      if (v is String) return int.tryParse(v);
+      return null;
+    }
+
     return ConsumptionDto(
       id: (json['id'] ?? 0) is int ? json['id'] as int : int.tryParse('${json['id']}') ?? 0,
       roomId: (json['room_id'] ?? json['roomId'] ?? 0) is int
           ? (json['room_id'] ?? json['roomId']) as int
           : int.tryParse('${json['room_id'] ?? json['roomId']}') ?? 0,
-      serviceId: (json['service_id'] ?? json['serviceId'] ?? 0) is int
-          ? (json['service_id'] ?? json['serviceId']) as int
-          : int.tryParse('${json['service_id'] ?? json['serviceId']}') ?? 0,
-      endReading: toDouble(json['end_reading'] ?? json['endReading']),
+      serviceId: _toIntNullable(json['service_id'] ?? json['serviceId']),
+      endReading: _toDouble(json['end_reading'] ?? json['endReading']),
       photoUrl: json['photo_url'] ?? json['photoUrl'] ?? '',
-      consumption: toDouble(json['consumption']),
-      createdAt: toDate(json['created_at'] ?? json['createdAt']),
-      updatedAt: toDate(json['updated_at'] ?? json['updatedAt']),
-      deletedAt: toDate(json['deleted_at'] ?? json['deletedAt']),
+      consumption: _toDouble(json['consumption']),
+      type: json['type'] ?? 'water', // Default to water if not provided
+      createdAt: _toDate(json['created_at'] ?? json['createdAt']),
+      updatedAt: _toDate(json['updated_at'] ?? json['updatedAt']),
+      deletedAt: _toDate(json['deleted_at'] ?? json['deletedAt']),
       service: json['service'] is Map<String, dynamic>
           ? ServiceSummaryDto.fromJson(json['service'] as Map<String, dynamic>)
           : null,
@@ -66,6 +75,7 @@ class ConsumptionDto {
         'end_reading': endReading,
         'photo_url': photoUrl,
         'consumption': consumption,
+        'type': type, // Added to JSON
         'created_at': createdAt?.toIso8601String(),
         'updated_at': updatedAt?.toIso8601String(),
         'deleted_at': deletedAt?.toIso8601String(),
@@ -79,6 +89,7 @@ class ConsumptionDto {
         endReading: endReading,
         photoUrl: photoUrl,
         consumption: consumption,
+        type: type, // Pass type to domain model
         createdAt: createdAt,
         updatedAt: updatedAt,
         deletedAt: deletedAt,
@@ -96,7 +107,6 @@ class ConsumptionDto {
     return dtos.map((e) => e.toDomain()).toList();
   }
 }
-
 class ServiceSummaryDto {
   final int id;
   final String name;

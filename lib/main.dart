@@ -1,3 +1,4 @@
+import 'package:app/Presentation/provider/payment_viewmode/payment_viewmodel.dart';
 import 'package:app/Presentation/views/rooms/room_detail_view.dart';
 import 'package:app/Presentation/provider/auth_viewmodel.dart';
 import 'package:app/Presentation/views/auth/login_view.dart';
@@ -45,7 +46,11 @@ Future<void> main() async {
 
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => AuthViewModel())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthViewModel()),
+        ChangeNotifierProvider(create: (_) => PaymentViewModel())
+
+        ],
       child: MyApp(initialRoute: initial),
     ),
   );

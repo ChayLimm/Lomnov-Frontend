@@ -304,6 +304,7 @@ class _BuildingsViewState extends State<BuildingsView> {
                                         Navigator.of(context).pop(false),
                                     panaraDialogType: PanaraDialogType.error,
                                     barrierDismissible: true,
+                                    color: Colors.blue,
                                   );
                               if (confirm != true) return;
 
