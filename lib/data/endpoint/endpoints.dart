@@ -47,6 +47,7 @@ class Endpoints {
   // Dashboard / Home
   static const String dashboardSummary = '/api/dashboard/summary';
   static const String recentInvoices = '/api/invoices/recent';
+  static String reportsByLandlord(int landlordId) => '/api/reports/$landlordId';
   static const String notifications = '/api/notifications';
   static String notificationById(int id) => '/api/notifications/$id';
   static String notificationMarkRead(int id) => '/api/notifications/$id/read';
@@ -65,6 +66,9 @@ class Endpoints {
   // Room types
   static const String roomTypes = '/api/room-types';
   static String roomTypeById(int id) => '/api/room-types/$id';
+
+  // Payments
+  static String paymentsByLandlord(int landlordId) => '/api/payments/landlord/$landlordId';
 
   // Roles
   static const String roles = '/api/roles';

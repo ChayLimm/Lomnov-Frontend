@@ -44,7 +44,7 @@ class RoomFetchService extends ApiBase {
   /// If [buildingId] is provided it will be added as a query parameter.
   Future<RoomsResponse> fetchRooms({int page = 1, int perPage = 15, int? buildingId}) async {
     // Build URI and query parameters
-    var uri = buildUri('/api/rooms');
+    var uri = buildUri(Endpoints.rooms);
     final query = <String, String>{
       'page': page.toString(),
       'per_page': perPage.toString(),
@@ -90,7 +90,7 @@ class RoomFetchService extends ApiBase {
 
   /// Fetch a single room by id using GET /api/rooms/{id}
   Future<RoomDto> fetchRoomById(int roomId) async {
-    final uri = buildUri('/api/rooms/$roomId');
+    final uri = buildUri(Endpoints.roomById(roomId));
     final headers = await buildHeaders();
 
     dev.log('[HTTP] GET $uri');
@@ -115,7 +115,7 @@ class RoomFetchService extends ApiBase {
   /// Delete a room by id using DELETE /api/rooms/{id}
   /// Throws on failure via HttpErrorHandler
   Future<void> deleteRoom(int roomId) async {
-    final uri = buildUri('/api/rooms/$roomId');
+    final uri = buildUri(Endpoints.roomById(roomId));
     final headers = await buildHeaders();
 
     dev.log('[HTTP] DELETE $uri');
@@ -132,7 +132,7 @@ class RoomFetchService extends ApiBase {
   /// Expects a JSON serializable [payload] containing required fields.
   /// Returns the created RoomDto on success.
   Future<RoomDto> createRoom(Map<String, dynamic> payload) async {
-    final uri = buildUri('/api/rooms');
+    final uri = buildUri(Endpoints.rooms);
     final headers = await buildHeaders();
 
     dev.log('[HTTP] POST $uri payload=${payload.toString()}');
@@ -156,7 +156,7 @@ class RoomFetchService extends ApiBase {
   /// Update a room using PUT /api/rooms/{id}
   /// Returns updated RoomDto on success.
   Future<RoomDto> updateRoom(int roomId, Map<String, dynamic> payload) async {
-    final uri = buildUri('/api/rooms/$roomId');
+    final uri = buildUri(Endpoints.roomById(roomId));
     final headers = await buildHeaders();
 
     dev.log('[HTTP] PUT $uri payload=${payload.toString()}');

@@ -1,5 +1,9 @@
 import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:app/data/services/payments_service.dart';
+import 'package:app/data/services/auth_service/auth_service.dart';
+import 'package:app/domain/models/payment.dart';
+import 'package:app/data/dto/paginated_result.dart';
 
 // --- Configurable values (change these to update the receipts UI) ---
 const double kReceiptIconContainerSize = 56.0;
@@ -19,6 +23,24 @@ class ReceiptsSection extends StatefulWidget {
 class _ReceiptsSectionState extends State<ReceiptsSection> {
   int _tabIndex = 0;
   int _pageIndex = 0;
+  int? _landlordId;
+  late Future<PaginatedResult<Payment>> _paymentsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLandlordAndPayments();
+  }
+
+  Future<void> _loadLandlordAndPayments() async {
+    final id = await AuthService().getLandlordId();
+    setState(() {
+      _landlordId = id;
+      // fallback to 1 if landlord id is missing (keeps previous dev behavior)
+      final lid = _landlordId ?? 1;
+      _paymentsFuture = PaymentsService().fetchLandlordPayments(lid, page: _pageIndex + 1, status: null);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,35 +69,83 @@ class _ReceiptsSectionState extends State<ReceiptsSection> {
               _FilterChip(
                 label: 'All',
                 isSelected: _tabIndex == 0,
-                onTap: () => setState(() => _tabIndex = 0),
+                onTap: () => setState(() {
+                  _tabIndex = 0;
+                  _pageIndex = 0;
+                  final lid = _landlordId ?? 1;
+                  _paymentsFuture = PaymentsService().fetchLandlordPayments(lid, page: _pageIndex + 1, status: null);
+                }),
               ),
               const SizedBox(width: 8),
               _FilterChip(
                 label: 'Pending',
                 isSelected: _tabIndex == 1,
-                onTap: () => setState(() => _tabIndex = 1),
+                onTap: () => setState(() {
+                  _tabIndex = 1;
+                  _pageIndex = 0;
+                  final lid = _landlordId ?? 1;
+                  _paymentsFuture = PaymentsService().fetchLandlordPayments(lid, page: _pageIndex + 1, status: 'pending');
+                }),
               ),
               const SizedBox(width: 8),
               _FilterChip(
                 label: 'Paid',
                 isSelected: _tabIndex == 2,
-                onTap: () => setState(() => _tabIndex = 2),
+                onTap: () => setState(() {
+                  _tabIndex = 2;
+                  _pageIndex = 0;
+                  final lid = _landlordId ?? 1;
+                  _paymentsFuture = PaymentsService().fetchLandlordPayments(lid, page: _pageIndex + 1, status: 'paid');
+                }),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: kReceiptItemCount,
-            itemBuilder: (context, index) => _ReceiptItem(),
-            separatorBuilder: (context, index) => const SizedBox(height: kReceiptSeparatorHeight),
+          FutureBuilder<PaginatedResult<Payment>>(
+            future: _paymentsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return SizedBox(
+                  height: 120,
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              if (snapshot.hasError) {
+                final err = snapshot.error;
+                return Text('Error loading receipts: ${err.toString()}');
+              }
+              final paged = snapshot.data;
+              final payments = paged?.items ?? <Payment>[];
+              final totalPages = paged?.pagination.lastPage ?? 1;
+              if (payments.isEmpty) {
+                return const Text('No receipts available');
+              }
+              return ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: payments.length,
+                itemBuilder: (context, index) => _ReceiptItem.fromPayment(payments[index]),
+                separatorBuilder: (context, index) => const SizedBox(height: kReceiptSeparatorHeight),
+              );
+            },
           ),
           const SizedBox(height: 20),
-          _Pagination(
-            currentPage: _pageIndex,
-            totalPages: 5,
-            onPageChanged: (i) => setState(() => _pageIndex = i),
+          FutureBuilder<PaginatedResult<Payment>>(
+            future: _paymentsFuture,
+            builder: (context, snap) {
+              final totalPages = snap.data?.pagination.lastPage ?? 1;
+                  return _Pagination(
+                currentPage: _pageIndex,
+                totalPages: totalPages,
+                onPageChanged: (i) => setState(() {
+                  _pageIndex = i;
+                  // preserve current tab filter when changing page
+                  final status = _tabIndex == 1 ? 'pending' : _tabIndex == 2 ? 'paid' : null;
+                  final lid = _landlordId ?? 1;
+                  _paymentsFuture = PaymentsService().fetchLandlordPayments(lid, page: _pageIndex + 1, status: status);
+                }),
+              );
+            },
           ),
         ],
       ),
@@ -122,10 +192,42 @@ class _FilterChip extends StatelessWidget {
 }
 
 class _ReceiptItem extends StatelessWidget {
-  const _ReceiptItem();
+  final Payment? payment;
+
+  const _ReceiptItem({this.payment});
+
+  factory _ReceiptItem.fromPayment(Payment p) => _ReceiptItem(payment: p);
 
   @override
   Widget build(BuildContext context) {
+    final p = payment;
+    final title = p != null ? 'Invoice#${p.id}' : 'Invoice#143241234';
+    final roomText = p != null && p.roomId != null ? 'Room${p.roomId}' : 'RoomA002';
+    // compute total
+    double total = 0.0;
+    if (p != null) {
+      for (final it in p.items) {
+        total += double.tryParse(it.subtotal) ?? 0.0;
+      }
+    }
+    final totalText = '\$ ${total.toStringAsFixed(2)}';
+
+    // normalize status for display and determine badge colors
+    final statusRaw = p?.status ?? 'pending';
+    final status = statusRaw.toLowerCase();
+    Color badgeBg;
+    Color badgeTextColor;
+    if (status == 'paid') {
+      badgeBg = AppColors.successColor.withOpacity(0.12);
+      badgeTextColor = AppColors.successColor;
+    } else if (status == 'pending' || status == 'unpaid') {
+      badgeBg = AppColors.warningColor.withOpacity(0.12);
+      badgeTextColor = AppColors.warningColor;
+    } else {
+      badgeBg = Colors.grey.shade200;
+      badgeTextColor = Colors.black87;
+    }
+
     return Row(
       children: [
         Container(
@@ -149,34 +251,34 @@ class _ReceiptItem extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Invoice#143241234',
+                title,
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              Text('RoomA002', style: TextStyle(color: Colors.grey)),
+              Text(roomText, style: TextStyle(color: Colors.grey)),
             ],
           ),
         ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            const Text(
-              '\$ 123.4',
+            Text(
+              totalText,
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: AppColors.warningColor.withValues(alpha: 1.2),
+                color: badgeBg,
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: const Text(
-                'Pending',
-                style: TextStyle(color: AppColors.warningColor, fontSize: 10),
+              child: Text(
+                statusRaw,
+                style: TextStyle(color: badgeTextColor, fontSize: 10),
               ),
             ),
           ],
@@ -202,35 +304,39 @@ class _Pagination extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        _PageButton(
-          label: '1',
-          isSelected: currentPage == 0,
-          onTap: () => onPageChanged(0),
-        ),
-        _PageButton(
-          label: '2',
-          isSelected: currentPage == 1,
-          onTap: () => onPageChanged(1),
-        ),
-        _PageButton(
-          label: '3',
-          isSelected: currentPage == 2,
-          onTap: () => onPageChanged(2),
-        ),
-        _PageButton(
-          label: '4',
-          isSelected: currentPage == 3,
-          onTap: () => onPageChanged(3),
-        ),
-        _PageButton(
-          label: '5',
-          isSelected: currentPage == 4,
-          onTap: () => onPageChanged(4),
-        ),
+        ..._buildPageButtons(),
         const SizedBox(width: 8),
         const Icon(Icons.arrow_forward_ios, size: 16),
       ],
     );
+  }
+
+  List<Widget> _buildPageButtons() {
+    // totalPages and currentPage are 0-based here
+    final List<Widget> widgets = [];
+    final int tp = totalPages;
+    if (tp <= 0) return widgets;
+
+    // decide window of pages to show (1-based pages), show up to 5 pages
+    final int maxButtons = 5;
+    int current1 = currentPage + 1;
+    int start = current1 - 2;
+    if (start < 1) start = 1;
+    int end = start + maxButtons - 1;
+    if (end > tp) {
+      end = tp;
+      start = (end - maxButtons + 1).clamp(1, tp);
+    }
+
+    for (int p = start; p <= end; p++) {
+      widgets.add(_PageButton(
+        label: p.toString(),
+        isSelected: (currentPage + 1) == p,
+        onTap: () => onPageChanged(p - 1),
+      ));
+    }
+
+    return widgets;
   }
 }
 

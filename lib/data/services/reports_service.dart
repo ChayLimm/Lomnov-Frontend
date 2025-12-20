@@ -34,7 +34,7 @@ class MockReportsService implements ReportsService {
 class ApiReportsService extends ApiBase implements ReportsService {
   @override
   Future<ReportData> fetchReport({required String period, required int landlordId}) async {
-    final uri = buildUri('/api/reports/$landlordId');
+    final uri = buildUri(Endpoints.reportsByLandlord(landlordId));
     final headers = await buildHeaders();
 
     final res = await HttpErrorHandler.executeRequest(

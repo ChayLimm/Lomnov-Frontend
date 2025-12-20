@@ -30,7 +30,7 @@ class HomeService {
       throw Exception('Not authenticated');
     }
 
-    final uri = Endpoints.uri('/api/dashboard/summary');
+    final uri = Endpoints.uri(Endpoints.dashboardSummary);
     
     try {
       final response = await http.get(
@@ -69,7 +69,7 @@ class HomeService {
       throw Exception('Not authenticated');
     }
 
-    final uri = Endpoints.uri('/api/invoices/recent?limit=$limit');
+    final uri = Endpoints.uri(Endpoints.recentInvoices + '?limit=$limit');
     
     try {
       final response = await http.get(
@@ -104,12 +104,12 @@ class HomeService {
 
     // Future API implementation:
     /*
-    final token = await _authService.getToken();
+    final token = await _auth_service.getToken();
     if (token == null) {
       throw Exception('Not authenticated');
     }
 
-    final uri = Endpoints.uri('/api/invoices/send-reminders');
+    final uri = Endpoints.uri(Endpoints.sendReminders);
     
     try {
       final response = await http.post(
@@ -143,12 +143,12 @@ class HomeService {
 
     // Future API implementation:
     /*
-    final token = await _authService.getToken();
+    final token = await _auth_service.getToken();
     if (token == null) {
       throw Exception('Not authenticated');
     }
 
-    final uri = Endpoints.uri('/api/notifications${unreadOnly ? '?unread=true' : ''}');
+    final uri = Endpoints.uri(Endpoints.notifications + (unreadOnly ? '?unread=true' : ''));
     
     try {
       final response = await http.get(
