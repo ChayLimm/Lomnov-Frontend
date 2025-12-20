@@ -17,7 +17,8 @@ class BuildingCard extends StatelessWidget {
     final b = building;
     final hasImage = b.imageUrl.isNotEmpty;
     final available = b.rooms.where((r) => r.status.toLowerCase() == 'available').length;
-    final occupied = b.rooms.where((r) => r.status.toLowerCase() == 'occupied').length;
+    // Count rooms with at least one contract as 'paid'
+    final paid = b.rooms.where((r) => r.contracts != null && r.contracts.isNotEmpty).length;
     final theme = Theme.of(context);
     return Material(
 
@@ -146,12 +147,12 @@ class BuildingCard extends StatelessWidget {
                       runSpacing: 4,
                       children: [
                         _Pill(
-                          label: '$available available room',
+                          label: '$available available',
                           outlined: true,
                           color: AppColors.primaryColor,
                         ),
                         _Pill(
-                          label: '$occupied occupied',
+                          label: '$paid paid',
                           outlined: false,
                           color: AppColors.primaryColor,
                         ),

@@ -3,15 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
+
 import 'package:app/data/services/contract_service/contract_service.dart';
+import 'package:app/Presentation/provider/tenant_list_viewmodel.dart';
+import 'package:app/domain/models/contract/tenant_model.dart';
 
 class ContractFormView extends StatefulWidget {
   final int? roomId;
-  final dynamic contract; // for edit, can be Map or Domain model
+  final dynamic contract; // Can be ContractModel or Map<String, dynamic>
 
   const ContractFormView({super.key, this.roomId, this.contract});
 
-  bool get isEdit => contract != null;
+  bool get isEdit => contract != null; // Edit if contract provided
 
   @override
   State<ContractFormView> createState() => _ContractFormViewState();
@@ -21,6 +24,8 @@ class _ContractFormViewState extends State<ContractFormView> {
   final _formKey = GlobalKey<FormState>();
   final _roomIdCtrl = TextEditingController();
   final _tenantIdCtrl = TextEditingController();
+  TenantListViewModel? _tenantListVM;
+  TenantModel? _selectedTenant;
   final _startDateCtrl = TextEditingController();
   final _endDateCtrl = TextEditingController();
   final _depositCtrl = TextEditingController();
@@ -33,11 +38,41 @@ class _ContractFormViewState extends State<ContractFormView> {
   @override
   void initState() {
     super.initState();
+    // For demo, landlordId is hardcoded as 1. Replace as needed.
+    _tenantListVM = TenantListViewModel(landlordId: 1);
+    _tenantListVM!.fetchTenants().then((_) {
+      // If editing, preselect tenant
+      if (widget.isEdit) {
+        final c = widget.contract;
+        int? tid;
+        if (c is Map<String, dynamic>) {
+          tid = int.tryParse((c['tenant_id'] ?? c['tenantId'] ?? c['user_id'] ?? '').toString());
+        } else {
+          try { tid = c.tenantId ?? c.userId; } catch (_) {}
+        }
+        if (tid != null) {
+          TenantModel? found;
+          if (_tenantListVM!.tenants.isNotEmpty) {
+            found = _tenantListVM!.tenants.firstWhere(
+              (t) => t.id == tid,
+              orElse: () => _tenantListVM!.tenants.first,
+            );
+          } else {
+            found = null;
+          }
+          if (found != null) {
+            setState(() {
+              _selectedTenant = found;
+              _tenantIdCtrl.text = found?.id.toString() ?? '';
+            });
+          }
+        }
+      }
+    });
     if (widget.isEdit) {
       final c = widget.contract;
       if (c is Map<String, dynamic>) {
         _roomIdCtrl.text = (c['room_id'] ?? c['roomId'] ?? '').toString();
-        _tenantIdCtrl.text = (c['tenant_id'] ?? c['tenantId'] ?? c['user_id'] ?? '').toString();
         _startDateCtrl.text = (c['start_date'] ?? c['startDate'] ?? '').toString();
         _endDateCtrl.text = (c['end_date'] ?? c['endDate'] ?? '').toString();
         _depositCtrl.text = (c['deposit_amount'] ?? c['depositAmount'] ?? '').toString();
@@ -45,7 +80,6 @@ class _ContractFormViewState extends State<ContractFormView> {
       } else {
         try {
           _roomIdCtrl.text = (c.roomId ?? '').toString();
-          _tenantIdCtrl.text = (c.tenantId ?? c.userId ?? '').toString();
           _startDateCtrl.text = (c.startDate ?? '').toString();
           _endDateCtrl.text = (c.endDate ?? '').toString();
           _depositCtrl.text = (c.depositAmount ?? '').toString();
@@ -207,14 +241,38 @@ class _ContractFormViewState extends State<ContractFormView> {
                   },
                 ),
                 const SizedBox(height: 12),
-                TextFormField(
-                  controller: _tenantIdCtrl,
-                  decoration: _fieldDecoration('Tenant ID', icon: Icons.person_outline),
-                  keyboardType: TextInputType.number,
-                  validator: (v) {
-                    final n = int.tryParse((v ?? '').trim());
-                    if (n == null) return 'Required numeric';
-                    return null;
+                AnimatedBuilder(
+                  animation: _tenantListVM!,
+                  builder: (context, _) {
+                    if (_tenantListVM!.isLoading) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                        child: LinearProgressIndicator(),
+                      );
+                    }
+                    if (_tenantListVM!.tenants.isEmpty) {
+                      return Text('No tenants found', style: TextStyle(color: Colors.red));
+                    }
+                    return DropdownButtonFormField<TenantModel>(
+                      value: _selectedTenant,
+                      items: _tenantListVM!.tenants
+                          .map((t) => DropdownMenuItem<TenantModel>(
+                                value: t,
+                                child: Text(t.name),
+                              ))
+                          .toList(),
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedTenant = val;
+                          _tenantIdCtrl.text = val?.id.toString() ?? '';
+                        });
+                      },
+                      decoration: _fieldDecoration('Tenant', icon: Icons.person_outline),
+                      validator: (v) {
+                        if (_tenantIdCtrl.text.isEmpty) return 'Select tenant';
+                        return null;
+                      },
+                    );
                   },
                 ),
                 const SizedBox(height: 12),

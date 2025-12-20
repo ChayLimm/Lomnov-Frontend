@@ -73,7 +73,7 @@ class TenantDto {
   }
 
   String get fullName {
-    final parts = [firstName, lastName].where((part) => part != null && part.isNotEmpty);
+    final parts = [firstName, lastName].where((part) => part.isNotEmpty);
     return parts.join(' ').trim();
   }
 

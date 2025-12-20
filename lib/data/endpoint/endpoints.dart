@@ -1,3 +1,4 @@
+
 import 'dart:developer' as dev;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -39,6 +40,9 @@ class Endpoints {
   // Contracts
   static String contracts() => '/api/contracts';
   static String contractById(int id) => '/api/contracts/$id';
+
+    // Tenants
+  static String tenantsByLandlord(int landlordId) => '/api/landlord/$landlordId/tenants';
 
   // Dashboard / Home
   static const String dashboardSummary = '/api/dashboard/summary';

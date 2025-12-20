@@ -21,6 +21,7 @@ import 'package:app/Presentation/views/settings/services/service_view.dart';
 import 'package:app/Presentation/views/settings/roles/role_view.dart';
 import 'package:app/Presentation/views/settings/contact/contact_us_view.dart';
 import 'package:app/data/services/mobile_device_identifier.dart';
+import 'package:app/data/services/tenant_service.dart';
 
 import 'package:app/Presentation/views/auth/bakong_setup_view.dart';
 
@@ -43,6 +44,15 @@ Future<void> main() async {
   final auth = AuthService();
   final loggedIn = await auth.isLoggedIn();
   final initial = loggedIn ? '/home' : '/';
+
+  // Debug: fetch tenants once at startup to capture logs (remove in production)
+  try {
+    final tenantSvc = TenantService();
+    final tenants = await tenantSvc.fetchTenants(1);
+    debugPrint('[Debug] tenants fetched at startup: count=${tenants.length}');
+  } catch (e) {
+    debugPrint('[Debug] fetchTenants error: $e');
+  }
 
   runApp(
     MultiProvider(
