@@ -55,13 +55,13 @@ class ConsumptionDto {
           ? (json['room_id'] ?? json['roomId']) as int
           : int.tryParse('${json['room_id'] ?? json['roomId']}') ?? 0,
       serviceId: _toIntNullable(json['service_id'] ?? json['serviceId']),
-      endReading: _toDouble(json['end_reading'] ?? json['endReading']),
+      endReading: toDouble(json['end_reading'] ?? json['endReading']),
       photoUrl: json['photo_url'] ?? json['photoUrl'] ?? '',
-      consumption: _toDouble(json['consumption']),
+      consumption: toDouble(json['consumption']),
       type: json['type'] ?? 'water', // Default to water if not provided
-      createdAt: _toDate(json['created_at'] ?? json['createdAt']),
-      updatedAt: _toDate(json['updated_at'] ?? json['updatedAt']),
-      deletedAt: _toDate(json['deleted_at'] ?? json['deletedAt']),
+      createdAt: toDate(json['created_at'] ?? json['createdAt']),
+      updatedAt: toDate(json['updated_at'] ?? json['updatedAt']),
+      deletedAt: toDate(json['deleted_at'] ?? json['deletedAt']),
       service: json['service'] is Map<String, dynamic>
           ? ServiceSummaryDto.fromJson(json['service'] as Map<String, dynamic>)
           : null,
