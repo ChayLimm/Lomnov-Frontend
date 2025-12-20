@@ -38,7 +38,7 @@ class TenantDto {
                 [
                   firstName,
                   lastName,
-                ].where((e) => e != null && e!.isNotEmpty).join(' '))
+                ].where((e) => e != null && e.isNotEmpty).join(' '))
             .trim();
 
     final String? phone = json['phone'] as String?;

@@ -10,10 +10,17 @@ class AuthViewModel extends ChangeNotifier {
   bool _loading = false;
   String? _error;
   UserModel? _user;
+  String? _telegramToken; // plain string token from Telegram
 
   bool get loading => _loading;
   String? get error => _error;
   UserModel? get user => _user;
+  String? get token => _telegramToken;
+
+  void setToken(String? t) {
+    _telegramToken = t;
+    notifyListeners();
+  }
 
   Future<void> login(String email, String password) async {
     if (email.isEmpty || password.isEmpty) {
@@ -54,6 +61,28 @@ class AuthViewModel extends ChangeNotifier {
         await AuthService().setLandlordId(_user!.id);
         Future.microtask(() => Get.offAllNamed('/home'));
       }
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Register using a full payload map (multi-step flow).
+  /// Expected keys include: name, email, phonenumber, password, token,
+  /// bakong_id, bakong_name, bakong_location, device_id.
+  Future<void> registerWithPayload(Map<String, dynamic> payload) async {
+    _loading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      // Post to the same endpoint via AuthService to handle token/landlord_id persistence.
+      final res = await AuthService().register(payload);
+      // Optional: if response includes user data, parse into _user. Otherwise rely on persisted state.
+      // Navigate after success.
+      Future.microtask(() => Get.offAllNamed('/home'));
     } catch (e) {
       _error = e.toString();
     } finally {

@@ -1,6 +1,7 @@
 import 'package:app/Presentation/provider/auth_viewmodel.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:app/Presentation/themes/text_styles.dart';
+import 'package:app/Presentation/views/auth/bakong_setup_view.dart';
 import 'package:app/Presentation/widgets/gradient_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -16,8 +17,10 @@ class SignUpView extends StatefulWidget {
 class _SignUpViewState extends State<SignUpView> {
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
+  final _tokenCtrl = TextEditingController();
   bool _obscure = true;
   bool _obscure2 = true;
   bool _agree = false;
@@ -27,8 +30,10 @@ class _SignUpViewState extends State<SignUpView> {
   void dispose() {
     _nameCtrl.dispose();
     _emailCtrl.dispose();
+    _phoneCtrl.dispose();
     _passCtrl.dispose();
     _confirmCtrl.dispose();
+    _tokenCtrl.dispose();
     super.dispose();
   }
 
@@ -88,6 +93,16 @@ class _SignUpViewState extends State<SignUpView> {
                       ),
                       const SizedBox(height: 12),
                       TextField(
+                        controller: _phoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'Phone number',
+                          suffixIcon: Icon(Icons.phone_outlined),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
                         controller: _passCtrl,
                         obscureText: _obscure,
                         textInputAction: TextInputAction.next,
@@ -111,6 +126,15 @@ class _SignUpViewState extends State<SignUpView> {
                           ),
                         ),
                         onSubmitted: (_) => _submit(vm),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _tokenCtrl,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: ' Telegram Token',
+                          suffixIcon: Icon(Icons.vpn_key_outlined),
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Row(
@@ -150,7 +174,7 @@ class _SignUpViewState extends State<SignUpView> {
               ],
               const SizedBox(height: 8),
               GradientButton(
-                label: vm.loading ? 'Please wait…' : 'Create Account',
+                label: vm.loading ? 'Please wait…' : ' Next',
                 loading: vm.loading,
                 onPressed: (!vm.loading && _agree) ? () => _submit(vm) : null,
               ),
@@ -180,8 +204,10 @@ class _SignUpViewState extends State<SignUpView> {
     // Client-side validations for better user feedback
     final name = _nameCtrl.text.trim();
     final email = _emailCtrl.text.trim();
+    final phone = _phoneCtrl.text.trim();
     final pass = _passCtrl.text;
     final confirm = _confirmCtrl.text;
+    final token = _tokenCtrl.text.trim();
 
     if (name.isEmpty) {
       _showMessage('Please enter your full name');
@@ -189,6 +215,10 @@ class _SignUpViewState extends State<SignUpView> {
     }
     if (email.isEmpty || !_isValidEmail(email)) {
       _showMessage('Please enter a valid email address');
+      return;
+    }
+    if (phone.isEmpty || phone.length < 8) {
+      _showMessage('Please enter a valid phone number');
       return;
     }
     if (pass.length < 6) {
@@ -199,14 +229,28 @@ class _SignUpViewState extends State<SignUpView> {
       _showMessage('Passwords do not match');
       return;
     }
+    if (token.isEmpty) {
+      _showMessage('Please enter your token');
+      return;
+    }
     if (!_agree) {
       _showMessage('You must agree to the Terms and Conditions');
       return;
     }
 
-    // Reset last shown vm error so we can display any new error from this attempt
+    // Proceed to Bakong step without posting yet
     _lastVmError = null;
-    vm.register(name, email, pass);
+
+    Get.to(
+      () => const BakongSetupView(),
+      arguments: {
+        'name': name,
+        'email': email,
+        'phonenumber': phone,
+        'password': pass,
+        'token': token,
+      },
+    );
   }
 
   void _showMessage(String message) {
@@ -231,6 +275,8 @@ class _SignUpViewState extends State<SignUpView> {
     return raw; // fallback to raw message
   }
 }
+
+// Bakong setup page moved to its own file and route: /bakong-setup
 
 class _AuthHeader extends StatelessWidget {
   final String title;

@@ -42,7 +42,7 @@ class SettingsView extends StatelessWidget {
             title: 'Account Settings',
             children: [
               _Tile(icon: Icons.person_outline, label: 'Profile', onTap: () => Get.toNamed('/edit-profile')),
-              const _Tile(icon: Icons.lock_outline, label: 'Password & Security'),
+              // const _Tile(icon: Icons.lock_outline, label: 'Password & Security'),
             ],
           ),
           const SizedBox(height: 12),
@@ -51,9 +51,7 @@ class SettingsView extends StatelessWidget {
             children: [
               _Tile(icon: Icons.lightbulb_outline, label: 'Services', onTap: () => Get.to(() => const ServiceView())),
               const _Tile(icon: Icons.account_balance_wallet_outlined, label: 'Account Bakong'),
-              _Tile(icon: Icons.person, label: 'Roles', onTap: () => Get.toNamed('/roles')),
               _Tile(icon: Icons.room_service_outlined, label: 'Room Types', onTap: () => Get.to(() => const RoomTypeView())),
-              _Tile(icon: Icons.tips_and_updates_sharp, label: 'Users')
             ],
           ),
           const SizedBox(height: 12),

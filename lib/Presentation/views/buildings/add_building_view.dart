@@ -526,9 +526,17 @@ class _ImagePickerPlaceholder extends StatefulWidget {
 class _ImagePickerPlaceholderState extends State<_ImagePickerPlaceholder> {
   Uint8List? _previewBytes;
   String? _fileName;
-  bool _uploading = false;
+  final bool _uploading = false;
 
-  final _auth = AuthService();
+  String? get _networkImageUrl {
+    final url = widget.controller.text.trim();
+    if (url.isEmpty) return null;
+    // If already absolute, use as is; else prepend baseUrl
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    // Import Endpoints if not already
+    return Endpoints.baseUrl + (url.startsWith('/') ? url : '/$url');
+  }
+
 
   Future<void> _pickFile() async {
     final result = await FilePicker.platform.pickFiles(
@@ -549,33 +557,6 @@ class _ImagePickerPlaceholderState extends State<_ImagePickerPlaceholder> {
   }
   
 
-  String? _extractUrl(String body) {
-    // Try parse a few common response shapes
-    try {
-      final dynamic decoded = body.isEmpty ? null : jsonDecode(body);
-      if (decoded is Map<String, dynamic>) {
-        final m = decoded;
-        String? pick(Map<String, dynamic> x) {
-          final candidates = ['url', 'image_url', 'imageUrl', 'path'];
-          for (final k in candidates) {
-            final v = x[k];
-            if (v is String && v.isNotEmpty) return v;
-          }
-          return null;
-        }
-        final direct = pick(m);
-        if (direct != null) return direct;
-        if (m['data'] is Map<String, dynamic>) {
-          final d = m['data'] as Map<String, dynamic>;
-          final inner = pick(d);
-          if (inner != null) return inner;
-        }
-      } else if (decoded is String && decoded.startsWith('http')) {
-        return decoded;
-      }
-    } catch (_) {}
-    return null;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -595,19 +576,8 @@ class _ImagePickerPlaceholderState extends State<_ImagePickerPlaceholder> {
             child: Stack(
               children: [
                 Center(
-                  child: _previewBytes == null
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.image_outlined, color: Colors.grey.shade600),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Tap to upload image',
-                              style: TextStyle(color: Colors.grey.shade600),
-                            ),
-                          ],
-                        )
-                      : ClipRRect(
+                  child: _previewBytes != null
+                      ? ClipRRect(
                           borderRadius: BorderRadius.circular(10),
                           child: Image.memory(
                             _previewBytes!,
@@ -615,13 +585,39 @@ class _ImagePickerPlaceholderState extends State<_ImagePickerPlaceholder> {
                             height: 120,
                             fit: BoxFit.cover,
                           ),
-                        ),
+                        )
+                      : (_networkImageUrl != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.network(
+                                _networkImageUrl!,
+                                width: double.infinity,
+                                height: 120,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.broken_image_outlined, color: Colors.grey.shade600),
+                                    const SizedBox(height: 6),
+                                    Text('Image not found', style: TextStyle(color: Colors.grey.shade600)),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.image_outlined, color: Colors.grey.shade600),
+                                const SizedBox(height: 6),
+                                Text('Tap to upload image', style: TextStyle(color: Colors.grey.shade600)),
+                              ],
+                            )),
                 ),
                 if (_uploading)
                   Positioned.fill(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.35),
+                        color: Colors.black.withOpacity(0.35),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Center(

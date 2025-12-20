@@ -26,13 +26,13 @@ class ConsumptionDto {
   });
 
   factory ConsumptionDto.fromJson(Map<String, dynamic> json) {
-    double _toDouble(dynamic v) {
+    double toDouble(dynamic v) {
       if (v is num) return v.toDouble();
       if (v is String) return double.tryParse(v) ?? 0.0;
       return 0.0;
     }
 
-    DateTime? _toDate(dynamic v) {
+    DateTime? toDate(dynamic v) {
       if (v is String && v.isNotEmpty) {
         return DateTime.tryParse(v);
       }
@@ -47,12 +47,12 @@ class ConsumptionDto {
       serviceId: (json['service_id'] ?? json['serviceId'] ?? 0) is int
           ? (json['service_id'] ?? json['serviceId']) as int
           : int.tryParse('${json['service_id'] ?? json['serviceId']}') ?? 0,
-      endReading: _toDouble(json['end_reading'] ?? json['endReading']),
+      endReading: toDouble(json['end_reading'] ?? json['endReading']),
       photoUrl: json['photo_url'] ?? json['photoUrl'] ?? '',
-      consumption: _toDouble(json['consumption']),
-      createdAt: _toDate(json['created_at'] ?? json['createdAt']),
-      updatedAt: _toDate(json['updated_at'] ?? json['updatedAt']),
-      deletedAt: _toDate(json['deleted_at'] ?? json['deletedAt']),
+      consumption: toDouble(json['consumption']),
+      createdAt: toDate(json['created_at'] ?? json['createdAt']),
+      updatedAt: toDate(json['updated_at'] ?? json['updatedAt']),
+      deletedAt: toDate(json['deleted_at'] ?? json['deletedAt']),
       service: json['service'] is Map<String, dynamic>
           ? ServiceSummaryDto.fromJson(json['service'] as Map<String, dynamic>)
           : null,
@@ -123,20 +123,20 @@ class ServiceSummaryDto {
   });
 
   factory ServiceSummaryDto.fromJson(Map<String, dynamic> json) {
-    double _toDouble(dynamic v) {
+    double toDouble(dynamic v) {
       if (v is num) return v.toDouble();
       if (v is String) return double.tryParse(v) ?? 0.0;
       return 0.0;
     }
 
-    DateTime? _toDate(dynamic v) {
+    DateTime? toDate(dynamic v) {
       if (v is String && v.isNotEmpty) {
         return DateTime.tryParse(v);
       }
       return null;
     }
 
-    int? _toIntNullable(dynamic v) {
+    int? toIntNullable(dynamic v) {
       if (v == null) return null;
       if (v is int) return v;
       if (v is double) return v.toInt();
@@ -147,14 +147,14 @@ class ServiceSummaryDto {
     return ServiceSummaryDto(
       id: (json['id'] ?? 0) is int ? json['id'] as int : int.tryParse('${json['id']}') ?? 0,
       name: json['name'] ?? '',
-      unitPrice: _toDouble(json['unit_price'] ?? json['unitPrice']),
+      unitPrice: toDouble(json['unit_price'] ?? json['unitPrice']),
       description: json['description'] ?? '',
-      createdAt: _toDate(json['created_at'] ?? json['createdAt']),
-      updatedAt: _toDate(json['updated_at'] ?? json['updatedAt']),
-      deletedAt: _toDate(json['deleted_at'] ?? json['deletedAt']),
+      createdAt: toDate(json['created_at'] ?? json['createdAt']),
+      updatedAt: toDate(json['updated_at'] ?? json['updatedAt']),
+      deletedAt: toDate(json['deleted_at'] ?? json['deletedAt']),
       unitName: json['unit_name'] ?? json['unitName'],
       serviceName: json['service_name'] ?? json['serviceName'],
-      landlordId: _toIntNullable(json['landlord_id'] ?? json['landlordId']),
+      landlordId: toIntNullable(json['landlord_id'] ?? json['landlordId']),
     );
   }
 

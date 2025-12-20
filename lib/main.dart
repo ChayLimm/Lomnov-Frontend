@@ -21,6 +21,8 @@ import 'package:app/Presentation/views/settings/roles/role_view.dart';
 import 'package:app/Presentation/views/settings/contact/contact_us_view.dart';
 import 'package:app/data/services/mobile_device_identifier.dart';
 
+import 'package:app/Presentation/views/auth/bakong_setup_view.dart';
+
 final DeviceIdService deviceIdService = DeviceIdService();
 
 
@@ -70,6 +72,7 @@ class MyApp extends StatelessWidget {
         GetPage(name: RoleView.routeName, page: () => const RoleView()),
         GetPage(name: '/contact-us', page: () => const ContactUsView()),
         GetPage(name: '/edit-profile', page: () => const EditProfileView()),
+        GetPage(name: '/bakong-setup', page: () => const BakongSetupView()),
         GetPage(
           name: '/buildings/add',
           page: () {

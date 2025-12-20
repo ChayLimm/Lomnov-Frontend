@@ -13,7 +13,7 @@ class Endpoints {
   static Uri uri(String path) => Uri.parse('$baseUrl$path');
 
   // Auth
-  static const String register = '/api/register';
+  static const String register = '/api/users/register';
   static const String login = '/api/login';
   static const String logout = '/api/logout';
 

@@ -30,20 +30,20 @@ class BuildingDto {
   /// Create from API JSON response
   factory BuildingDto.fromJson(Map<String, dynamic> json) {
     final data = json['data'] ?? json;
-    int _toInt(dynamic v, {int defaultValue = 0}) {
+    int toInt(dynamic v, {int defaultValue = 0}) {
       if (v is int) return v;
       if (v is double) return v.toInt();
       if (v is String) return int.tryParse(v) ?? defaultValue;
       return defaultValue;
     }
     return BuildingDto(
-      id: _toInt(data['id']),
-      landlordId: _toInt(data['landlord_id'] ?? data['landlordId']),
+      id: toInt(data['id']),
+      landlordId: toInt(data['landlord_id'] ?? data['landlordId']),
       name: data['name'] ?? '',
       address: data['address'] ?? '',
       imageUrl: data['image_url'] ?? data['imageUrl'] ?? '',
-      floor: _toInt(data['floor']),
-      unit: _toInt(data['unit']),
+      floor: toInt(data['floor']),
+      unit: toInt(data['unit']),
       landlord: data['landlord'] != null
           ? LandlordDto.fromJson(data['landlord'] as Map<String, dynamic>)
           : null,
