@@ -16,6 +16,7 @@ class Endpoints {
   static const String register = '/api/users/register';
   static const String login = '/api/login';
   static const String logout = '/api/logout';
+  static const String users = '/api/users';
 
   // Buildings
   static const String buildings = '/api/buildings';
