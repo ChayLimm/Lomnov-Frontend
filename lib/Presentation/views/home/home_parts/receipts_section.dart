@@ -24,7 +24,9 @@ class _ReceiptsSectionState extends State<ReceiptsSection> {
   int _tabIndex = 0;
   int _pageIndex = 0;
   int? _landlordId;
-  late Future<PaginatedResult<Payment>> _paymentsFuture;
+  // initialize with a safe default so the FutureBuilder can read a Future
+  late Future<PaginatedResult<Payment>> _paymentsFuture =
+      PaymentsService().fetchLandlordPayments(1, page: 1, status: null);
 
   @override
   void initState() {

@@ -32,12 +32,14 @@ class ContractDto {
       id: json['id'] as int,
       roomId: json['room_id'] as int,
       tenantId: json['tenant_id'] as int,
-      startDate: json['start_date'] as String,
+      startDate: json['start_date'] as String? ?? DateTime.now().toIso8601String(),
       endDate: json['end_date'] as String?,
-      depositAmount: json['deposit_amount'] as String,
-      status: json['status'] as String,
-      createdAt: json['created_at'] as String,
-      updatedAt: json['updated_at'] as String,
+      depositAmount: (json['deposit_amount'] != null)
+          ? json['deposit_amount'].toString()
+          : '0',
+      status: json['status'] as String? ?? '',
+      createdAt: json['created_at'] as String? ?? DateTime.now().toIso8601String(),
+      updatedAt: json['updated_at'] as String? ?? DateTime.now().toIso8601String(),
       tenant: TenantDto.fromJson(json['tenant'] as Map<String, dynamic>),
     );
   }

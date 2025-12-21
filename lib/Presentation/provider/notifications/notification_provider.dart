@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:app/domain/models/home_model/notification_model.dart';
 import 'package:app/data/dto/notification_dto.dart';
 import 'package:app/data/services/notifications/notification_service.dart';
+import 'package:app/data/services/auth_service/auth_service.dart';
 
 enum NotificationTab { payment, registration }
 
@@ -26,7 +27,10 @@ class NotificationState extends ChangeNotifier {
       case NotificationTab.payment:
         return _all.where((n) => (n.type ?? '').toLowerCase() == 'payment').toList();
       case NotificationTab.registration:
-        return _all.where((n) => (n.type ?? '').toLowerCase() == 'registration').toList();
+        return _all
+            .where((n) => (n.type ?? '').toLowerCase() == 'registration')
+            .where((n) => (n.status ?? '').toLowerCase() != 'rejected')
+            .toList();
     }
   }
 
@@ -34,9 +38,11 @@ class NotificationState extends ChangeNotifier {
     _setLoading(true);
     _error = null;
     try {
+      // If we have a landlord id saved, prefer landlord-scoped endpoint
+      final int? landlordId = await AuthService().getLandlordId();
       final List<NotificationDto> dtos = unreadOnly
           ? await _service.fetchUnread()
-          : await _service.fetchAll();
+          : (landlordId != null ? await _service.fetchByLandlord(landlordId) : await _service.fetchAll());
       _all = dtos.map((e) => e.toDomain()).toList(growable: false);
     } catch (e) {
       _error = e.toString();

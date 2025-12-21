@@ -52,10 +52,12 @@ class ServiceState extends ChangeNotifier {
   Future<void> update(ServiceModel m) async {
     _setLoading(true);
     try {
+      final landlordId = await _service.auth.getLandlordId();
       final payload = {
         'name': m.name,
         'unit_price': m.unitPrice,
         'description': m.description,
+        if (landlordId != null) 'landlord_id': landlordId,
       };
       final dto = await _service.update(m.id, payload);
       _items = _items.map((x) => x.id == m.id ? dto.toDomain() : x).toList(growable: false);

@@ -49,10 +49,13 @@ class _ReportViewState extends State<ReportView> {
       setState(() {
         _data = d;
       });
-    } catch (e) {
+    } catch (e, st) {
+      // Surface the actual error to aid debugging (shown in UI)
       if (!mounted) return;
+      debugPrint('Report fetch error: $e');
+      debugPrintStack(stackTrace: st);
       setState(() {
-        _error = 'Failed to load report';
+        _error = e?.toString() ?? 'Failed to load report';
       });
     } finally {
       if (!mounted) return;
@@ -83,6 +86,8 @@ class _ReportViewState extends State<ReportView> {
         _ErrorView(message: _error!, onRetry: _fetch),
       ] else ...[
         _Card(child: _TotalIncome(data: _data)),
+        const SizedBox(height: 10),
+        if (_data != null) _Card(child: _LandlordHeader(data: _data)),
         const SizedBox(height: 10),
         _Card(child: _Breakdown(data: _data)),
       ],
@@ -232,6 +237,38 @@ class _Card extends StatelessWidget {
   }
 }
 
+class _LandlordHeader extends StatelessWidget {
+  final ReportData? data;
+  const _LandlordHeader({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final unpaidRooms = data?.unpaidRooms ?? 0.0;
+    final unpaidServices = data?.unpaidServices ?? 0.0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Summary', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        const SizedBox(height: 6),
+        const SizedBox(height: 8),
+        Row(children: [
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('Unpaid Rooms', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+            const SizedBox(height: 4),
+            Text(_fmtCurrency(unpaidRooms), style: const TextStyle(fontWeight: FontWeight.bold)),
+          ])),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('Unpaid Services', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+            const SizedBox(height: 4),
+            Text(_fmtCurrency(unpaidServices), style: const TextStyle(fontWeight: FontWeight.bold)),
+          ])),
+        ])
+      ],
+    );
+  }
+}
+
 class _ErrorView extends StatelessWidget {
   final String message; final Future<void> Function() onRetry;
   const _ErrorView({required this.message, required this.onRetry});
@@ -290,8 +327,9 @@ class _TotalIncome extends StatelessWidget {
   Widget build(BuildContext context) {
     final d = data;
     final income = d?.totalIncome ?? 2262.50;
-    final paid = d?.paid ?? 22; final total = d?.totalInvoices ?? 30;
-    final ratio = total > 0 ? paid/total : 0.0;
+    // Show total income amount in the donut. Use a full ring to represent the amount.
+    final paid = d?.paid ?? 0; final total = d?.totalInvoices ?? 0;
+    final ratio = 1.0; // always show full donut; center shows actual amount
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -305,8 +343,8 @@ class _TotalIncome extends StatelessWidget {
             child: Stack(alignment: Alignment.center, children: [
               _Donut(progress: ratio),
               Column(mainAxisSize: MainAxisSize.min, children: [
-                Text('$paid/$total', style: const TextStyle(fontWeight: FontWeight.bold)),
-                const Text('Paid', style: TextStyle(fontSize: 10, color: AppColors.textSecondary))
+                Text(_fmtCurrency(income), style: const TextStyle(fontWeight: FontWeight.bold)),
+                const Text('Total Income', style: TextStyle(fontSize: 10, color: AppColors.textSecondary))
               ])
             ]),
           ),

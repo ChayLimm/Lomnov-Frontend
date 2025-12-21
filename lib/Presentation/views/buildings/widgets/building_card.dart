@@ -18,7 +18,7 @@ class BuildingCard extends StatelessWidget {
     final hasImage = b.imageUrl.isNotEmpty;
     final available = b.rooms.where((r) => r.status.toLowerCase() == 'available').length;
     // Count rooms with at least one contract as 'paid'
-    final paid = b.rooms.where((r) => r.contracts != null && r.contracts.isNotEmpty).length;
+    final paid = b.rooms.where((r) => r.contracts.isNotEmpty).length;
     final theme = Theme.of(context);
     return Material(
 

@@ -7,6 +7,11 @@ class AppNotification {
   final DateTime createdAt;
   final bool isRead;
   final String? type;
+  final String? status;
+  final String? firstName;
+  final String? lastName;
+  final String? email;
+  final String? phone;
 
   const AppNotification({
     required this.id,
@@ -15,6 +20,11 @@ class AppNotification {
     required this.createdAt,
     this.isRead = false,
     this.type,
+    this.status,
+    this.firstName,
+    this.lastName,
+    this.email,
+    this.phone,
   });
 
   /// Check if notification is recent (within 24 hours)
@@ -54,6 +64,11 @@ class AppNotification {
     DateTime? createdAt,
     bool? isRead,
     String? type,
+    String? status,
+    String? firstName,
+    String? lastName,
+    String? email,
+    String? phone,
   }) {
     return AppNotification(
       id: id ?? this.id,
@@ -62,6 +77,11 @@ class AppNotification {
       createdAt: createdAt ?? this.createdAt,
       isRead: isRead ?? this.isRead,
       type: type ?? this.type,
+      status: status ?? this.status,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
     );
   }
 
@@ -80,7 +100,12 @@ class AppNotification {
           message == other.message &&
           createdAt == other.createdAt &&
           isRead == other.isRead &&
-          type == other.type;
+          type == other.type &&
+          status == other.status &&
+          firstName == other.firstName &&
+          lastName == other.lastName &&
+          email == other.email &&
+          phone == other.phone;
 
   @override
   int get hashCode =>
@@ -89,10 +114,15 @@ class AppNotification {
       message.hashCode ^
       createdAt.hashCode ^
       isRead.hashCode ^
-      type.hashCode;
+      type.hashCode ^
+      (status?.hashCode ?? 0) ^
+      (firstName?.hashCode ?? 0) ^
+      (lastName?.hashCode ?? 0) ^
+      (email?.hashCode ?? 0) ^
+      (phone?.hashCode ?? 0);
 
   @override
   String toString() {
-    return 'AppNotification(id: $id, title: $title, isRead: $isRead, createdAt: $createdAt)';
+    return 'AppNotification(id: $id, title: $title, isRead: $isRead, createdAt: $createdAt, firstName: $firstName, lastName: $lastName, email: $email, phone: $phone)';
   }
 }

@@ -6,12 +6,19 @@ class ReportData {
   final int totalInvoices;
   final List<LegendItem> legends;
   final List<BreakdownItem> breakdown;
+  final int? landlordId;
+  final double unpaidRooms;
+  final double unpaidServices;
+
   const ReportData({
     required this.totalIncome,
     required this.paid,
     required this.totalInvoices,
     required this.legends,
     required this.breakdown,
+    this.landlordId,
+    this.unpaidRooms = 0.0,
+    this.unpaidServices = 0.0,
   });
 }
 

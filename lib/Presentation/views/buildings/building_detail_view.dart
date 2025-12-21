@@ -426,33 +426,9 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
       final svc = RoomFetchService();
       await svc.deleteRoom(roomId);
 
-      // Refresh the current page from server so pagination and counts
-      // remain consistent with backend state.
-      try {
-        final resp = await svc.fetchRooms(page: _currentPage, perPage: _perPage);
-        final pageRooms = resp.items.map((d) => d.toDomain()).toList();
-        if (!mounted) return;
-        setState(() {
-          _rooms = pageRooms;
-          _currentPage = resp.pagination.currentPage;
-        });
-      } catch (e) {
-        // If refresh fails, fallback to removing locally so the UI still updates.
-        dev.log('[Rooms] refresh after delete failed: $e');
-        if (mounted) {
-          setState(() {
-            _rooms.removeWhere((elem) {
-              if (elem is Map<String, dynamic>) {
-                final idVal = elem['id'] ?? elem['room_id'] ?? elem['roomId'];
-                final parsed = idVal != null ? int.tryParse(idVal.toString()) : null;
-                return parsed == roomId;
-              } else {
-                return elem.id == roomId;
-              }
-            });
-          });
-        }
-      }
+      // Re-fetch the building so we get the authoritative rooms list
+      // (this avoids falling back to a stale `building.rooms`).
+      await _load();
 
       Get.snackbar('Deleted', 'Room deleted');
     } catch (e) {

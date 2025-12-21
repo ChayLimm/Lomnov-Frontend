@@ -49,8 +49,11 @@ class Endpoints {
   static const String recentInvoices = '/api/invoices/recent';
   static String reportsByLandlord(int landlordId) => '/api/reports/$landlordId';
   static const String notifications = '/api/notifications';
+  static String notificationsByLandlord(int landlordId) => '/api/notifications/landlord/$landlordId';
   static String notificationById(int id) => '/api/notifications/$id';
   static String notificationMarkRead(int id) => '/api/notifications/$id/read';
+  static String notificationApproveRegistration(int id) => '/api/notifications/$id/approve-registration';
+  static String notificationRejectRegistration(int id) => '/api/notifications/$id/reject-registration';
   static const String notificationsUnread = '/api/notifications/unread';
   static const String sendReminders = '/api/invoices/send-reminders';
 
