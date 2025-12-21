@@ -7,7 +7,8 @@ import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:app/domain/models/home_model/dashboard_summary.dart';
 import 'package:app/domain/models/home_model/invoice_status.dart';
-import 'package:app/data/mock_data/mock_data.dart';
+import 'package:app/data/services/home_service/home_service.dart';
+import 'package:app/data/services/auth_service/auth_service.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 
@@ -21,7 +22,7 @@ class HomeTab extends StatelessWidget {
     final user = auth.user;
     return SafeArea(
       child: FutureBuilder<DashboardSummary>(
-        future: fetchDashboardMock(),
+        future: HomeService(AuthService()).fetchDashboardSummary(),
         builder: (context, snap) {
           final data = snap.data;
 

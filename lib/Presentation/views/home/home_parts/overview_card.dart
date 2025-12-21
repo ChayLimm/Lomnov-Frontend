@@ -10,11 +10,11 @@ class OverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final paid = summary?.paidInvoices ?? 30;
-    final total = summary?.totalInvoices ?? 40;
+    final paid = summary?.paidInvoices ?? 0;
+    final total = summary?.totalInvoices ?? 0;
     final ratio = summary?.paidRatio ?? (total > 0 ? (paid / total) : 0.0);
-    final income = summary?.totalIncome ?? 2262.50;
-    final month = summary?.month ?? DateTime(2025, 10, 1);
+    final income = summary?.totalIncome ?? 0.0;
+    final month = summary?.month ?? DateTime.now();
 
     return Container(
       decoration: BoxDecoration(

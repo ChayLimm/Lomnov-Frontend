@@ -33,6 +33,7 @@ class Payment {
   final int landlordId;
   final int? transactionId;
   final int? roomId;
+  final String? roomStatus;
   final String status;
   final String? qrCode;
   final String? receiptUrl;
@@ -49,7 +50,7 @@ class Payment {
     required this.qrCode,
     required this.receiptUrl,
     required this.createdAt,
-    required this.items,
+    required this.items, this.roomStatus,
   });
 
   factory Payment.fromJson(Map<String, dynamic> json) {
@@ -61,6 +62,7 @@ class Payment {
       transactionId: json['transaction_id'] != null ? (json['transaction_id'] as int) : null,
       roomId: json['room_id'] != null ? (json['room_id'] as int) : null,
       status: json['status'] as String? ?? '',
+      roomStatus: (json['room'] is Map<String, dynamic>) ? (json['room']['status'] as String?) : null,
       qrCode: json['qr_code'] as String?,
       receiptUrl: json['receipt_url'] as String?,
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),

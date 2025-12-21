@@ -214,12 +214,14 @@ class _ReceiptItem extends StatelessWidget {
     }
     final totalText = '\$ ${total.toStringAsFixed(2)}';
 
-    // normalize status for display and determine badge colors
+    // Determine whether this payment should be shown as paid/green.
     final statusRaw = p?.status ?? 'pending';
     final status = statusRaw.toLowerCase();
+    final bool isPaidVisual = status == 'paid';
     Color badgeBg;
     Color badgeTextColor;
-    if (status == 'paid') {
+    final String badgeText = isPaidVisual ? 'Paid' : statusRaw;
+    if (isPaidVisual) {
       badgeBg = AppColors.successColor.withOpacity(0.12);
       badgeTextColor = AppColors.successColor;
     } else if (status == 'pending' || status == 'unpaid') {
@@ -279,7 +281,7 @@ class _ReceiptItem extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
-                statusRaw,
+                badgeText,
                 style: TextStyle(color: badgeTextColor, fontSize: 10),
               ),
             ),

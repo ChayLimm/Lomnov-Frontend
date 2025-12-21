@@ -125,10 +125,11 @@ class _RoomDetailViewState extends State<RoomDetailView> {
   }
 
   Map<String, dynamic>? _buildingMap() {
-    if (widget.room is Map<String, dynamic>)
+    if (widget.room is Map<String, dynamic>) {
       return (widget.room['building'] is Map)
           ? Map<String, dynamic>.from(widget.room['building'])
           : null;
+    }
     try {
       final b = widget.room.building;
       if (b == null) return null;
@@ -146,10 +147,11 @@ class _RoomDetailViewState extends State<RoomDetailView> {
   }
 
   Map<String, dynamic>? _currentContractMap() {
-    if (widget.room is Map<String, dynamic>)
+    if (widget.room is Map<String, dynamic>) {
       return (widget.room['current_contract'] is Map)
           ? Map<String, dynamic>.from(widget.room['current_contract'])
           : null;
+    }
     try {
       final c = widget.room.currentContract;
       if (c == null) return null;
