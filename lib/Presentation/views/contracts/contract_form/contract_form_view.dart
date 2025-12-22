@@ -254,7 +254,7 @@ class _ContractFormViewState extends State<ContractFormView> {
                       return Text('No tenants found', style: TextStyle(color: Colors.red));
                     }
                     return DropdownButtonFormField<TenantModel>(
-                      value: _selectedTenant,
+                      initialValue: _selectedTenant,
                       items: _tenantListVM!.tenants
                           .map((t) => DropdownMenuItem<TenantModel>(
                                 value: t,

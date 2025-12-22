@@ -8,6 +8,7 @@ class BuildingService {
   final _mutate = BuildingMutationService();
 
   /// Fetch buildings, optionally for a specific landlord.
+  // ignore: non_constant_identifier_names
   Future<List<BuildingDto>> fetchBuildings(int? landlord_id, {int? landlordId}) =>
       _fetch.fetchBuildingsForLandlord(landlordId: landlordId);
   Future fetchBuildingById(int id) =>

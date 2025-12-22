@@ -119,7 +119,6 @@ class _ReceiptsSectionState extends State<ReceiptsSection> {
               }
               final paged = snapshot.data;
               final payments = paged?.items ?? <Payment>[];
-              final totalPages = paged?.pagination.lastPage ?? 1;
               if (payments.isEmpty) {
                 return const Text('No receipts available');
               }
@@ -225,9 +224,11 @@ class _ReceiptItem extends StatelessWidget {
     Color badgeTextColor;
     final String badgeText = isPaidVisual ? 'Paid' : statusRaw;
     if (isPaidVisual) {
+      // ignore: deprecated_member_use
       badgeBg = AppColors.successColor.withOpacity(0.12);
       badgeTextColor = AppColors.successColor;
     } else if (status == 'pending' || status == 'unpaid') {
+      // ignore: deprecated_member_use
       badgeBg = AppColors.warningColor.withOpacity(0.12);
       badgeTextColor = AppColors.warningColor;
     } else {

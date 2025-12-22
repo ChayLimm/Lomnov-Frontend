@@ -2,6 +2,7 @@ import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:app/domain/models/home_model/dashboard_summary.dart';
+import 'package:app/domain/models/home_model/invoice_status.dart';
 import 'package:app/domain/utils/utils.dart';
 
 class OverviewCard extends StatelessWidget {
@@ -10,9 +11,18 @@ class OverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final paid = summary?.paidInvoices ?? 0;
-    final total = summary?.totalInvoices ?? 0;
-    final ratio = summary?.paidRatio ?? (total > 0 ? (paid / total) : 0.0);
+    // Prefer counts provided by the summary (more reliable than inferring
+    // from payments). Sum counts to compute total, and use the paid count
+    // for the paid value. Fall back to existing summary fields if counts
+    // are not available.
+    final counts = summary?.counts;
+    final paid = (counts != null && counts.isNotEmpty)
+      ? (counts[InvoiceStatus.paid] ?? 0)
+      : (summary?.paidInvoices ?? 0);
+    final total = (counts != null && counts.isNotEmpty)
+      ? counts.values.fold<int>(0, (s, v) => s + v)
+      : (summary?.totalInvoices ?? 0);
+    final ratio = (total > 0) ? (paid / total) : 0.0;
     final income = summary?.totalIncome ?? 0.0;
     final month = summary?.month ?? DateTime.now();
 
@@ -24,7 +34,7 @@ class OverviewCard extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha :0.04), blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
         ],
       ),
       padding: const EdgeInsets.all(14),
@@ -86,11 +96,8 @@ class ProgressRing extends StatelessWidget {
               painter: _GradientProgressPainter(
                 progress: ratio.clamp(0.0, 1.0),
                 strokeWidth: 10,
-                // If fully paid, use a solid primary color; otherwise use the app gradient
-                gradient: (ratio >= 1.0)
-                    ? LinearGradient(colors: [AppColors.primaryColor, AppColors.primaryColor])
-                    : AppColors.primaryGradient,
-                backgroundColor: AppColors.primaryColor.withOpacity(0.15),
+                gradient: AppColors.primaryGradient,
+                backgroundColor: AppColors.primaryColor.withValues(alpha: 0.15),
               ),
             ),
           ),

@@ -31,13 +31,13 @@ class SettingDto {
   });
 
   factory SettingDto.fromJson(Map<String, dynamic> json) {
-    double _toDouble(dynamic v) {
+    double toDouble(dynamic v) {
       if (v is num) return v.toDouble();
       if (v is String) return double.tryParse(v) ?? 0.0;
       return 0.0;
     }
 
-    DateTime? _toDate(dynamic v) {
+    DateTime? toDate(dynamic v) {
       if (v is String && v.isNotEmpty) {
         return DateTime.tryParse(v);
       }
@@ -49,14 +49,14 @@ class SettingDto {
       userId: json['user_id'] as int,
       generalRules: json['general_rules'],
       contractRules: json['contract_rules'],
-      khrCurrency: _toDouble(json['khr_currency']),
-      finePerDay: _toDouble(json['fine_per_day']),
+      khrCurrency: toDouble(json['khr_currency']),
+      finePerDay: toDouble(json['fine_per_day']),
       fineAfter: json['fine_after'] as int,
-      tax: _toDouble(json['tax']),
-      waterPrice: _toDouble(json['water_price']),
-      electricityPrice: _toDouble(json['electricity_price']),
-      createdAt: _toDate(json['created_at']),
-      updatedAt: _toDate(json['updated_at']),
+      tax: toDouble(json['tax']),
+      waterPrice: toDouble(json['water_price']),
+      electricityPrice: toDouble(json['electricity_price']),
+      createdAt: toDate(json['created_at']),
+      updatedAt: toDate(json['updated_at']),
     );
   }
 

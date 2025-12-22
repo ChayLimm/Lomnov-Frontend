@@ -41,7 +41,7 @@ class ConsumptionDto {
       return null;
     }
 
-    int? _toIntNullable(dynamic v) {
+    int? toIntNullable(dynamic v) {
       if (v == null) return null;
       if (v is int) return v;
       if (v is double) return v.toInt();
@@ -54,7 +54,7 @@ class ConsumptionDto {
       roomId: (json['room_id'] ?? json['roomId'] ?? 0) is int
           ? (json['room_id'] ?? json['roomId']) as int
           : int.tryParse('${json['room_id'] ?? json['roomId']}') ?? 0,
-      serviceId: _toIntNullable(json['service_id'] ?? json['serviceId']),
+      serviceId: toIntNullable(json['service_id'] ?? json['serviceId']),
       endReading: toDouble(json['end_reading'] ?? json['endReading']),
       photoUrl: json['photo_url'] ?? json['photoUrl'] ?? '',
       consumption: toDouble(json['consumption']),

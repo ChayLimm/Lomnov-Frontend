@@ -3,7 +3,6 @@ import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:app/Presentation/views/payment/payment_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 
 class QuickActionsGrid extends StatelessWidget {
   const QuickActionsGrid({super.key});
@@ -26,23 +25,23 @@ class QuickActionsGrid extends StatelessWidget {
           children: [
             QuickActionCard(
               gradient: AppColors.primaryGradient,
-              title: 'Pay Now',
-              value: '920',
+              title: 'Payment',
+              value: 'make',
               icon: Icons.receipt_long,
               onTap:onTapProcessPayment
             ),
             const SizedBox(width: 12),
             QuickActionCard(
               gradient: AppColors.primaryGradient,
-              title: 'Add tenant',
-              value: '52',
+              title: 'Services',
+              value: 'Add',
               icon: Icons.person_add_alt_1,
             ),
             const SizedBox(width: 12),
             QuickActionCard(
               gradient: AppColors.primaryGradient,
-              title: 'Create Room',
-              value: '',
+              title: 'Room-Type',
+              value: 'Add',
               icon: Icons.meeting_room,
             ),
           ],

@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:app/Presentation/provider/payment_viewmode/payment_viewmodel.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:app/Presentation/themes/text_styles.dart';

@@ -56,7 +56,7 @@ class _ReportViewState extends State<ReportView> {
       debugPrint('Report fetch error: $e');
       debugPrintStack(stackTrace: st);
       setState(() {
-        _error = e?.toString() ?? 'Failed to load report';
+        _error = e.toString();
       });
     } finally {
       if (!mounted) return;

@@ -107,7 +107,7 @@ class _RoomFormViewState extends State<RoomFormView> {
       final dto = await svc.fetchBuildingById(_buildingId);
       final maxFloor = dto.floor; // dto has int floor
       setState(() {
-        _maxBuildingFloor = (maxFloor is int && maxFloor > 0) ? maxFloor : null;
+        _maxBuildingFloor = (maxFloor > 0) ? maxFloor : null;
         _loadingBuildingFloor = false;
       });
       // Clamp current floor selection if it exceeds the limit
@@ -768,6 +768,7 @@ class _RoomFormViewState extends State<RoomFormView> {
                           child: Card(
                             elevation: 0,
                             color: isSelected
+                                // ignore: deprecated_member_use
                                 ? AppColors.primaryColor.withOpacity(0.1)
                                 : AppColors.backgroundColor,
                             shape: RoundedRectangleBorder(
@@ -775,6 +776,7 @@ class _RoomFormViewState extends State<RoomFormView> {
                               side: BorderSide(
                                 color: isSelected
                                     ? AppColors.primaryColor
+                                    // ignore: deprecated_member_use
                                     : AppColors.primaryColor.withOpacity(0.5),
                                 width: 1,
                               ),
@@ -820,6 +822,7 @@ class _RoomFormViewState extends State<RoomFormView> {
                                           color: isSelected
                                               ? AppColors.primaryColor
                                               : AppColors.primaryColor
+                                                    // ignore: deprecated_member_use
                                                     .withOpacity(0.5),
                                           size: 20,
                                         ),

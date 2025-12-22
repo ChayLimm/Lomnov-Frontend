@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:app/domain/models/home_model/notification_model.dart';
@@ -162,15 +164,15 @@ class _RegistrationDetailState extends State<RegistrationDetail> {
                         Text(widget.notification.message, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
                         const SizedBox(height: 12),
                         DropdownButtonFormField<BuildingDto>(
-                          items: _buildings.map((b) => DropdownMenuItem(value: b, child: Text(b.name ?? ''))).toList(),
-                          value: _selectedBuilding,
+                          items: _buildings.map((b) => DropdownMenuItem(value: b, child: Text(b.name))).toList(),
+                          initialValue: _selectedBuilding,
                           onChanged: (v) => _onBuildingChanged(v),
                           decoration: _fieldDecoration('Building', icon: Icons.apartment),
                         ),
                         const SizedBox(height: 12),
                         DropdownButtonFormField<RoomDto>(
                           items: _rooms.map((r) => DropdownMenuItem(value: r, child: Text(r.roomNumber.isNotEmpty ? r.roomNumber : (r.barcode.isNotEmpty ? r.barcode : 'Room')))).toList(),
-                          value: _selectedRoom,
+                          initialValue: _selectedRoom,
                           onChanged: (v) => setState(() => _selectedRoom = v),
                           decoration: _fieldDecoration('Room', icon: Icons.meeting_room_outlined),
                         ),

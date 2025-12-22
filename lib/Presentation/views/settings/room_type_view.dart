@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously, curly_braces_in_flow_control_structures
+
 import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -6,7 +8,7 @@ import 'package:get/get.dart';
 import 'package:app/Presentation/widgets/confirm_action_dialog.dart';
 
 class RoomTypeView extends StatelessWidget {
-  const RoomTypeView({Key? key}) : super(key: key);
+  const RoomTypeView({super.key});
 
   static const routeName = '/room-types';
 
@@ -20,7 +22,7 @@ class RoomTypeView extends StatelessWidget {
 }
 
 class _RoomTypeScreen extends StatelessWidget {
-  const _RoomTypeScreen({Key? key}) : super(key: key);
+  const _RoomTypeScreen();
 
   Future<void> _showAddDialog(BuildContext context) async {
     final state = context.read<RoomTypeState>();
@@ -112,6 +114,7 @@ class _RoomTypeScreen extends StatelessWidget {
             Expanded(
               child: ListView.separated(
                 itemCount: state.items.length,
+                // ignore: unnecessary_underscores
                 separatorBuilder: (_, __) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final item = state.items[index];

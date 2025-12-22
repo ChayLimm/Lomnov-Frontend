@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'dart:developer' as dev;
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 import 'package:app/data/services/rooms_service/fetch_service.dart';
 import 'package:app/data/services/settings/services_service.dart';
 import 'package:app/data/services/settings/room_types_service.dart';
@@ -505,6 +507,91 @@ class _RoomFormViewState extends State<RoomFormView> {
     }
   }
 
+  Future<void> _openServicesPicker() async {
+    if (_availableServices.isEmpty) return;
+    // Use a temporary set to avoid updating selection until Done is pressed
+    final tempSelected = Set<int>.from(_selectedServiceIds);
+
+    final picked = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(builder: (ctx2, modalSetState) {
+          return SafeArea(
+            top: false,
+            child: SizedBox(
+              height: 460,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Row(
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        const Spacer(),
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(true),
+                          child: Text(
+                            'Done',
+                            style: TextStyle(color: AppColors.primaryColor),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 0),
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: _availableServices.length,
+                      itemBuilder: (context, index) {
+                        final service = _availableServices[index];
+                        final checked = tempSelected.contains(service.id);
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                          child: Row(
+                            children: [
+                              Checkbox(
+                                value: checked,
+                                onChanged: (v) {
+                                  modalSetState(() {
+                                    if (v == true) {
+                                      tempSelected.add(service.id);
+                                    } else {
+                                      tempSelected.remove(service.id);
+                                    }
+                                  });
+                                },
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(child: Text(service.name)),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        });
+      },
+    );
+
+    if (picked == true) {
+      setState(() {
+        _selectedServiceIds = tempSelected;
+      });
+    }
+  }
+
   InputDecoration _fieldDecoration(
     String label, {
     IconData? icon,
@@ -742,12 +829,8 @@ class _RoomFormViewState extends State<RoomFormView> {
                 const SizedBox(height: 20),
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Room Services (Facilities)',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
                 ),
-                const SizedBox(height: 10),
+                
                 if (_loadingServices)
                   const Center(child: CircularProgressIndicator())
                 else if (_availableServices.isEmpty)
@@ -757,88 +840,52 @@ class _RoomFormViewState extends State<RoomFormView> {
                   )
                 else
                   SizedBox(
-                    height: 80,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: _availableServices.length,
-                      itemBuilder: (context, index) {
-                        final service = _availableServices[index];
-                        final isSelected = _selectedServiceIds.contains(
-                          service.id,
-                        );
-                        return Container(
-                          width: 120,
-                          margin: const EdgeInsets.only(right: 12),
-                          child: Card(
-                            elevation: 0,
-                            color: isSelected
-                                ? AppColors.primaryColor.withValues(alpha: 0.1)
-                                : AppColors.backgroundColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              side: BorderSide(
-                                color: isSelected
-                                    ? AppColors.primaryColor
-                                    : AppColors.primaryColor.withValues(alpha: 0.5),
-                                width: 1,
-                              ),
+                    width: double.infinity,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: _openServicesPicker,
+                      child: InputDecorator(
+                        decoration: _fieldDecoration(
+                          'Services',
+                          icon: Icons.miscellaneous_services_outlined,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Builder(builder: (ctx) {
+                                if (_selectedServiceIds.isEmpty) {
+                                  return Text('Select Services',
+                                      style:
+                                          TextStyle(color: Colors.grey));
+                                }
+                                final names = _availableServices
+                                    .where((s) => _selectedServiceIds.contains(s.id))
+                                    .map((s) => s.name)
+                                    .toList();
+                                final display = names.length <= 3
+                                    ? names.join(', ')
+                                    : '${names.length} selected';
+                                return Text(
+                                  display,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(color: Colors.black87),
+                                );
+                              }),
                             ),
-                            child: InkWell(
-                              onTap: () {
-                                setState(() {
-                                  if (isSelected) {
-                                    _selectedServiceIds.remove(service.id);
-                                  } else {
-                                    _selectedServiceIds.add(service.id);
-                                  }
-                                });
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            service.name,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .titleSmall
-                                                ?.copyWith(
-                                                  fontWeight: isSelected
-                                                      ? FontWeight.bold
-                                                      : FontWeight.normal,
-                                                ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        Icon(
-                                          isSelected
-                                              ? Icons.check_circle
-                                              : Icons.circle_outlined,
-                                          color: isSelected
-                                              ? AppColors.primaryColor
-                                              : AppColors.primaryColor
-                                                    .withValues(alpha: 0.5),
-                                          size: 20,
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
+                            Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: AppColors.primaryColor,
                             ),
-                          ),
-                        );
-                      },
+                          ],
+                        ),
+                      ),
                     ),
                   ),
+                const SizedBox(height: 20),
+
+                // Image picker placeholder styled like Add Building form
+                const SizedBox(height: 8),
+                _ImagePickerPlaceholderRoom(),
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
@@ -864,6 +911,92 @@ class _RoomFormViewState extends State<RoomFormView> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// A lightweight image picker placeholder copied/adapted from the Add Building
+/// view. This shows a tappable preview box and lets the user pick a local
+/// image for visual preview only; it does not upload or post anything.
+class _ImagePickerPlaceholderRoom extends StatefulWidget {
+  final void Function(Uint8List bytes, String filename)? onFileSelected;
+  const _ImagePickerPlaceholderRoom({this.onFileSelected});
+
+  @override
+  State<_ImagePickerPlaceholderRoom> createState() => _ImagePickerPlaceholderRoomState();
+}
+
+class _ImagePickerPlaceholderRoomState extends State<_ImagePickerPlaceholderRoom> {
+  Uint8List? _previewBytes;
+  String? _fileName;
+
+  Future<void> _pickFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.single;
+    setState(() {
+      _previewBytes = file.bytes;
+      _fileName = file.name;
+    });
+    if (file.bytes != null && file.bytes!.isNotEmpty && widget.onFileSelected != null) {
+      widget.onFileSelected!(file.bytes!, file.name);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          height: 120,
+          decoration: BoxDecoration(
+            color: AppColors.backgroundColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Theme.of(context).dividerColor, style: BorderStyle.solid),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: _pickFile,
+            child: Stack(
+              children: [
+                Center(
+                  child: _previewBytes != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.memory(
+                            _previewBytes!,
+                            width: double.infinity,
+                            height: 120,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.image_outlined, color: Colors.grey.shade600),
+                            const SizedBox(height: 6),
+                            Text('Tap to select image', style: TextStyle(color: Colors.grey.shade600)),
+                          ],
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_fileName != null && _fileName!.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            _fileName!,
+            style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ]
+      ],
     );
   }
 }

@@ -6,6 +6,8 @@ import 'package:app/Presentation/provider/auth_viewmodel.dart';
 import 'package:app/Presentation/views/settings/services/service_view.dart';
 import 'package:app/Presentation/views/settings/room_type/room_type_view.dart';
 import 'package:app/Presentation/views/settings/contact/contact_us_view.dart';
+import 'package:app/Presentation/views/settings/meter_prices_view.dart';
+import 'package:app/Presentation/views/settings/rules_regulations_view.dart';
 
 class SettingsView extends StatelessWidget {
   const SettingsView({super.key});
@@ -51,6 +53,8 @@ class SettingsView extends StatelessWidget {
             children: [
               _Tile(icon: Icons.lightbulb_outline, label: 'Services', onTap: () => Get.to(() => const ServiceView())),
               const _Tile(icon: Icons.account_balance_wallet_outlined, label: 'Account Bakong'),
+              _Tile(icon: Icons.gas_meter_outlined, label: 'Meter Prices', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MeterPricesView()))),
+              _Tile(icon: Icons.rule_rounded, label: 'Rules & Regulations', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RulesRegulationsView()))),
               _Tile(icon: Icons.room_service_outlined, label: 'Room Types', onTap: () => Get.to(() => const RoomTypeView())),
             ],
           ),

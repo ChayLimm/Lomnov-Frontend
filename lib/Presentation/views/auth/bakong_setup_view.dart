@@ -16,7 +16,7 @@ class BakongController extends GetxController {
   String bakongId = '';
   String bakongName = '';
   String bakongLocation = '';
-  String deviceId = 'idk1'; // TODO: wire real device id
+  String deviceId = ''; 
 
   void initFromArgs(Map<String, dynamic> args) {
     name = args['name'] as String?;

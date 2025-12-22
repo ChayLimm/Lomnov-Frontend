@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:app/domain/models/home_model/dashboard_summary.dart';
 import 'package:app/domain/models/home_model/invoice_status.dart';
 import 'package:app/data/services/home_service/home_service.dart';
+import 'package:app/data/services/payments_service.dart';
 import 'package:app/data/services/auth_service/auth_service.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
@@ -132,73 +133,115 @@ class _StatusesGrid extends StatelessWidget {
   final DashboardSummary? summary;
   const _StatusesGrid({required this.summary});
 
+  Future<Map<InvoiceStatus, int>> _fetchCounts() async {
+    final Map<InvoiceStatus, int> result = {
+      InvoiceStatus.unpaid: 0,
+      InvoiceStatus.pending: 0,
+      InvoiceStatus.paid: 0,
+      InvoiceStatus.delay: 0,
+    };
+    try {
+      final lid = await AuthService().getLandlordId() ?? 1;
+      // fetch a large page to compute counts across recent payments
+      final paged = await PaymentsService().fetchLandlordPayments(lid, page: 1, perPage: 1000);
+      final items = paged.items;
+      for (final p in items) {
+        final s = (p.status).toLowerCase();
+        // classify statuses using substring checks to capture variants
+        if (s == 'paid' || s == 'complete' || s == 'completed' || s.contains('paid')) {
+          result[InvoiceStatus.paid] = (result[InvoiceStatus.paid] ?? 0) + 1;
+        } else if (s.contains('pending')) {
+          result[InvoiceStatus.pending] = (result[InvoiceStatus.pending] ?? 0) + 1;
+        } else if (s.contains('delay') || s.contains('delayed')) {
+          result[InvoiceStatus.delay] = (result[InvoiceStatus.delay] ?? 0) + 1;
+        } else {
+          // treat any other as unpaid
+          result[InvoiceStatus.unpaid] = (result[InvoiceStatus.unpaid] ?? 0) + 1;
+        }
+      }
+    } catch (_) {
+      // fall back to summary counts if network fails
+      final fallback = summary?.counts ?? const {};
+      result[InvoiceStatus.unpaid] = fallback[InvoiceStatus.unpaid] ?? result[InvoiceStatus.unpaid]!;
+      result[InvoiceStatus.pending] = fallback[InvoiceStatus.pending] ?? result[InvoiceStatus.pending]!;
+      result[InvoiceStatus.paid] = fallback[InvoiceStatus.paid] ?? result[InvoiceStatus.paid]!;
+      result[InvoiceStatus.delay] = fallback[InvoiceStatus.delay] ?? result[InvoiceStatus.delay]!;
+    }
+    return result;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final counts = summary?.counts ??
-        const {
-          InvoiceStatus.unpaid: 4,
-          InvoiceStatus.pending: 4,
-          InvoiceStatus.paid: 30,
-          InvoiceStatus.delay: 1,
-        };
-    final regularItems = <StatusItem>[
-      StatusItem(label: 'Unpaid', count: counts[InvoiceStatus.unpaid] ?? 0, color: Colors.grey.shade600),
-      StatusItem(label: 'Pending', count: counts[InvoiceStatus.pending] ?? 0, color: AppColors.warningColor),
-      StatusItem(label: 'Paid', count: counts[InvoiceStatus.paid] ?? 0, color: AppColors.successColor),
-    ];
+    return FutureBuilder<Map<InvoiceStatus, int>>(
+      future: _fetchCounts(),
+      builder: (context, snap) {
+        final counts = snap.data ?? summary?.counts ??
+            const {
+              InvoiceStatus.unpaid: 0,
+              InvoiceStatus.pending: 0,
+              InvoiceStatus.paid: 0,
+              InvoiceStatus.delay: 0,
+            };
 
-    // the delay item with a button
-    final delayItem = StatusItem(
-      label: 'Delay',
-      count: counts[InvoiceStatus.delay] ?? 0,
-      color: AppColors.errorColor,
-      countStyle: const TextStyle(
-        fontWeight: FontWeight.w700,
-        fontSize: 10,
-      ),
-      spacing: 20,
-      trailing: OutlinedButton(
-        onPressed: () {},
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primaryColor,
-          side: BorderSide(color: AppColors.primaryColor.withValues(alpha: 0.5)),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-        child: const Text('Send reminders'),
-      ),
-    );
+        final regularItems = <StatusItem>[
+          StatusItem(label: 'Unpaid', count: counts[InvoiceStatus.unpaid] ?? 0, color: Colors.grey.shade600),
+          StatusItem(label: 'Pending', count: counts[InvoiceStatus.pending] ?? 0, color: AppColors.warningColor),
+          StatusItem(label: 'Paid', count: counts[InvoiceStatus.paid] ?? 0, color: AppColors.successColor),
+        ];
 
-    return LayoutBuilder(builder: (context, constraints) {
-      const crossAxisCount = 3;
-      const crossAxisSpacing = 8.0;
-      const childAspectRatio = 2.0;
-      final itemWidth = (constraints.maxWidth - (crossAxisCount - 1) * crossAxisSpacing) / crossAxisCount;
-      final itemHeight = itemWidth / childAspectRatio;
-
-      return Column(
-        children: [
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              crossAxisSpacing: crossAxisSpacing,
-              mainAxisSpacing: 10,
-              childAspectRatio: childAspectRatio,
+        final delayItem = StatusItem(
+          label: 'Delay',
+          count: counts[InvoiceStatus.delay] ?? 0,
+          color: AppColors.errorColor,
+          countStyle: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 10,
+          ),
+          spacing: 20,
+          trailing: OutlinedButton(
+            onPressed: () {},
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primaryColor,
+              side: BorderSide(color: AppColors.primaryColor.withValues(alpha: 0.5)),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            itemCount: regularItems.length,
-            itemBuilder: (_, i) => StatusCard(item: regularItems[i]),
+            child: const Text('Send reminders'),
           ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            height: itemHeight,
-            child: StatusCard(item: delayItem),
-          ),
-        ],
-      );
-    });
+        );
+
+        return LayoutBuilder(builder: (context, constraints) {
+          const crossAxisCount = 3;
+          const crossAxisSpacing = 8.0;
+          const childAspectRatio = 2.0;
+          final itemWidth = (constraints.maxWidth - (crossAxisCount - 1) * crossAxisSpacing) / crossAxisCount;
+          final itemHeight = itemWidth / childAspectRatio;
+
+          return Column(
+            children: [
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: crossAxisSpacing,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: childAspectRatio,
+                ),
+                itemCount: regularItems.length,
+                itemBuilder: (_, i) => StatusCard(item: regularItems[i]),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                height: itemHeight,
+                child: StatusCard(item: delayItem),
+              ),
+            ],
+          );
+        });
+      },
+    );
   }
 }
 

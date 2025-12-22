@@ -79,7 +79,7 @@ class AuthViewModel extends ChangeNotifier {
 
     try {
       // Post to the same endpoint via AuthService to handle token/landlord_id persistence.
-      final res = await AuthService().register(payload);
+      await AuthService().register(payload);
       // Optional: if response includes user data, parse into _user. Otherwise rely on persisted state.
       // Navigate after success.
       Future.microtask(() => Get.offAllNamed('/home'));

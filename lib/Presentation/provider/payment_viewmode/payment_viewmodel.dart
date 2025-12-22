@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'package:app/data/dto/building_dto.dart';
 import 'package:app/data/dto/consumption_dto.dart';
 import 'package:app/data/dto/contract_dto.dart';
@@ -26,11 +28,12 @@ class PaymentViewModel extends ChangeNotifier {
   final SettingService settingService = ApiSettingService();
   // final Settin
 
+  // ignore: non_constant_identifier_names
   int? landlord_id = 0;
   bool _isLoading = false;
 
-  List<BuildingModel> _buildings = [];
-  List<RoomModel> _rooms = [];
+  final List<BuildingModel> _buildings = [];
+  final List<RoomModel> _rooms = [];
   UserModel? _tenant;
   ContractDto? contract;
   int? electricityServiceID;
@@ -47,9 +50,12 @@ class PaymentViewModel extends ChangeNotifier {
   double? water = 0;
   double? electricity = 0;
 
+  // ignore: non_constant_identifier_names
   double water_qty = 0;
+  // ignore: non_constant_identifier_names
   double electricity_qty = 0;
 
+  // ignore: non_constant_identifier_names
   double water_total = 0;
   double electricity_total = 0;
 
@@ -227,7 +233,7 @@ void setElectricity(double data) {
 
       final res = await roomService.fetchRooms(buildingId: buildingId);
 
-      List<RoomDto> rooms = res.items ?? []; // Handle null items
+      List<RoomDto> rooms = res.items; // Handle null items
       rooms.forEach((room) {
         RoomModel temp = room.toDomain();
         _rooms.add(temp);

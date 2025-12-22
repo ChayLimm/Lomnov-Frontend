@@ -9,7 +9,6 @@ import 'package:get/get.dart';
 import 'package:app/Presentation/views/buildings/add_building_view.dart';
 import 'package:app/Presentation/views/buildings/building_detail_view.dart';
 import 'package:provider/provider.dart';
-import 'package:panara_dialogs/panara_dialogs.dart';
 import 'package:app/Presentation/provider/auth_viewmodel.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:app/Presentation/widgets/confirm_action_dialog.dart';

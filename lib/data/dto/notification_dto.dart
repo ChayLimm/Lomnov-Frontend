@@ -104,7 +104,7 @@ class NotificationDto {
     return NotificationDto(
       id: idVal is int ? idVal : (int.tryParse(idVal?.toString() ?? '') ?? 0),
       title: parseTitle(data as Map<String, dynamic>),
-      message: parseMessage(data as Map<String, dynamic>),
+      message: parseMessage(data),
       createdAt: createdAt,
       isRead: isReadVal == true || isReadVal == 1,
       type: (data['notification_type'] ?? data['type'])?.toString(),

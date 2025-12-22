@@ -1,7 +1,6 @@
 import 'package:app/domain/models/contract/contract_model.dart';
 import 'package:app/domain/repositories/contract_repository.dart';
 import 'package:app/data/services/contract_service/contract_service.dart';
-import 'package:app/data/dto/contract_dto.dart';
 
 class ContractRepositoryImpl implements ContractRepository {
   final ContractService _service;

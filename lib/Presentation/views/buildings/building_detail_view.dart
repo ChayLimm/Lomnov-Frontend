@@ -1,3 +1,5 @@
+// ignore_for_file: unused_field, deprecated_member_use
+
 import 'package:app/domain/models/building_model/building_model.dart';
 import 'package:app/data/implementations/building/building_implementation.dart';
 import 'dart:developer' as dev;

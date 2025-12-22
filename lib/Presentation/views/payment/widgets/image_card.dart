@@ -57,6 +57,5 @@ class ImageCard extends StatelessWidget {
         ],
       ),
     );
- ;
   }
 }

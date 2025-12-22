@@ -1,8 +1,4 @@
 import 'dart:async';
-// import 'dart:convert';
-// import 'dart:developer' as dev;
-// import 'package:http/http.dart' as http;
-// import 'package:app/data/services/endpoints.dart';
 import 'package:app/data/services/auth_service/auth_service.dart';
 import 'package:app/domain/models/home_model/dashboard_summary.dart';
 import 'package:app/domain/models/home_model/invoice_status.dart';
@@ -13,10 +9,8 @@ import 'package:app/data/services/payments_service.dart';
 import 'package:app/data/services/reports_service.dart';
 import 'package:app/domain/models/payment.dart';
 
-/// Service for fetching home/dashboard data from the API.
-/// Currently uses mock data but structured for easy API integration.
 class HomeService {
-  // ignore: unused_field
+
   final AuthService _authService;
 
   HomeService(this._authService);
@@ -47,27 +41,28 @@ class HomeService {
       int paidCount = 0;
 
       // helper to process a page of payments
-      void _processPayments(List<Payment> payments) {
+      void processPayments(List<Payment> payments) {
         for (final Payment p in payments) {
-          final st = p.status.toLowerCase();
-          // Consider paid only when explicit 'paid' status, or when there's
-          // evidence of a successful payment (transactionId or receiptUrl),
-          // or when the nested room status is 'Paid'. Do NOT treat 'completed'
-          // as paid here (server uses it differently).
-          final bool isComplete = st == 'paid';
+          // Strict status-based classification: only use the status string
+          // reported by the payments endpoint. This avoids inferring paid
+          // from transaction ids or receipts.
+          final st = (p.status ?? '').toLowerCase();
+
           // debug print each payment's key fields
           // ignore: avoid_print
-          print('[Dashboard][Payment] id=${p.id} status=$st transaction=${p.transactionId} receipt=${p.receiptUrl} isComplete=$isComplete');
-          if (isComplete) {
+          print('[Dashboard][Payment] id=${p.id} status=$st transaction=${p.transactionId} receipt=${p.receiptUrl} roomStatus=${p.roomStatus}');
+
+          if (st.contains('paid')) {
             paidCount += 1;
             counts[InvoiceStatus.paid] = (counts[InvoiceStatus.paid] ?? 0) + 1;
-          } else if (st == 'pending') {
+          } else if (st.contains('pending')) {
             counts[InvoiceStatus.pending] = (counts[InvoiceStatus.pending] ?? 0) + 1;
-          } else if (st == 'unpaid') {
-            counts[InvoiceStatus.unpaid] = (counts[InvoiceStatus.unpaid] ?? 0) + 1;
-          } else if (st == 'delay' || st == 'delayed') {
+          } else if (st.contains('delay') || st.contains('delayed') || st.contains('overdue')) {
             counts[InvoiceStatus.delay] = (counts[InvoiceStatus.delay] ?? 0) + 1;
+          } else if (st.contains('unpaid')) {
+            counts[InvoiceStatus.unpaid] = (counts[InvoiceStatus.unpaid] ?? 0) + 1;
           } else {
+            // Any unknown/other values treated as unpaid
             counts[InvoiceStatus.unpaid] = (counts[InvoiceStatus.unpaid] ?? 0) + 1;
           }
 
@@ -78,14 +73,14 @@ class HomeService {
       }
 
       // process first page
-      _processPayments(paymentsPaged.items);
+      processPayments(paymentsPaged.items);
 
       // fetch and process remaining pages if any
       if (lastPage > 1) {
         for (int page = 2; page <= lastPage; page++) {
           try {
             final next = await PaymentsService().fetchLandlordPayments(lid, page: page, perPage: perPage);
-            _processPayments(next.items);
+            processPayments(next.items);
           } catch (_) {
             // ignore page errors but continue with what we have
           }
