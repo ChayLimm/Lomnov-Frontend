@@ -24,11 +24,18 @@ import 'package:app/data/services/mobile_device_identifier.dart';
 
 import 'package:app/Presentation/views/auth/bakong_setup_view.dart';
 
+import 'package:webview_flutter_android/webview_flutter_android.dart';
+// Import for iOS
+import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
+
+
+
 final DeviceIdService deviceIdService = DeviceIdService();
 
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
   await dotenv.load(fileName: ".env");
 
 // Fetch & log device id once.
@@ -44,6 +51,8 @@ Future<void> main() async {
   final loggedIn = await auth.isLoggedIn();
   final initial = loggedIn ? '/home' : '/';
 
+
+
   runApp(
     MultiProvider(
       providers: [
@@ -53,7 +62,7 @@ Future<void> main() async {
         ],
       child: MyApp(initialRoute: initial),
     ),
-  );
+);
 }
 
 class MyApp extends StatelessWidget {
