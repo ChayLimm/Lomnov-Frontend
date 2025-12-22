@@ -1,4 +1,5 @@
 import 'package:app/Presentation/provider/auth_viewmodel.dart';
+import 'package:app/Presentation/views/home/home_parts/home_shimmer.dart';
 import 'package:app/Presentation/views/home/home_parts/status_card.dart';
 import 'package:app/Presentation/views/home/home_parts/quick_actions_grid.dart';
 import 'package:app/Presentation/views/home/home_parts/receipts_section.dart';
@@ -25,6 +26,14 @@ class HomeTab extends StatelessWidget {
       child: FutureBuilder<DashboardSummary>(
         future: HomeService(AuthService()).fetchDashboardSummary(),
         builder: (context, snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return const SingleChildScrollView(
+              child: HomeShimmer(),
+            );
+          }
+          if (snap.hasError) {
+            return const Center(child: Text('Failed to load dashboard'));
+          }
           final data = snap.data;
 
           return SingleChildScrollView(
