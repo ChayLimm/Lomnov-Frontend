@@ -10,6 +10,7 @@ import 'package:app/data/services/auth_service/auth_service.dart';
 import 'package:app/data/services/building_service.dart';
 import 'package:app/data/services/consumptions_service/fetch_service.dart';
 import 'package:app/data/services/contract_service/contract_service.dart';
+import 'package:app/data/services/payment/payment_service.dart';
 import 'package:app/data/services/rooms_service/fetch_service.dart';
 import 'package:app/data/services/rooms_service/room_services_service.dart';
 import 'package:app/data/services/setting_service.dart';
@@ -23,9 +24,9 @@ class PaymentViewModel extends ChangeNotifier {
   final RoomServicesService roomServiceService = RoomServicesService();
   final AuthService authService = AuthService();
   final ContractService contractService = ContractService();
-  final ConsumptionsFetchService consumptionService =
-      ConsumptionsFetchService();
+  final ConsumptionsFetchService consumptionService = ConsumptionsFetchService();
   final SettingService settingService = ApiSettingService();
+  final PaymentService paymentService = ApiPaymentService();
   // final Settin
 
   // ignore: non_constant_identifier_names
@@ -40,6 +41,10 @@ class PaymentViewModel extends ChangeNotifier {
   int? waterServiceID;
   bool isLastPayment = false;
   List<ConsumptionDto> latestConsumptions = [];
+  String? waterImage;
+  String? electricityImage;
+
+  String? receiptUrl ;
 
   late SettingDto setting;
 
@@ -67,7 +72,59 @@ class PaymentViewModel extends ChangeNotifier {
   // Add room selection method
   RoomModel? selectedRoom;
 
-  void verifyPayment() {}
+  void setReceipt(String url){
+    receiptUrl = url;
+    notifyListeners();
+  }
+
+  Future<Map<String, dynamic>> processPayment() async {
+    try {
+      print("IN process payment service");
+      _isLoading = true;
+      notifyListeners();
+
+      if (selectedRoom == null) {
+        throw Exception("No room selected");
+      }
+
+      final List<Map<String, dynamic>> consumptions = [];
+
+      if (water != null) {
+        consumptions.add({
+          "room_id": selectedRoom!.id,
+          "end_reading": water,
+          "photo_url": waterImage,
+          "type": "water",
+        });
+      }
+
+      if (electricity != null) {
+        consumptions.add({
+          "room_id": selectedRoom!.id,
+          "end_reading": electricity,
+          "photo_url": electricityImage,
+          "type": "electricity",
+        });
+      }
+      final body = PaymentRequestDto(
+        roomId: selectedRoom!.id,
+        consumptions: consumptions,
+        penalty: false,
+        lastPayment: false,
+      );
+
+      final response = await paymentService.processPayment(body);
+
+      return response;
+
+    } catch (e) {
+      print("Error processing payment: $e");
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   Future<void> loadConumption() async {
     if (selectedRoom != null) {

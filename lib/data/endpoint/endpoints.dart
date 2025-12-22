@@ -72,7 +72,7 @@ class Endpoints {
 
   // Payments
   static String paymentsByLandlord(int landlordId) => '/api/payments/landlord/$landlordId';
-
+  static String proceedPayment = '/api/proccess-Payment';
   // Roles
   static const String roles = '/api/roles';
   static String roleById(int id) => '/api/roles/$id';
