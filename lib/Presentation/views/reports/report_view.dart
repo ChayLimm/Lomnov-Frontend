@@ -1,5 +1,6 @@
 // ignore_for_file: control_flow_in_finally
 
+import 'package:app/Presentation/views/reports/widgets/report_shimmer.dart';
 import 'package:flutter/material.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:app/domain/models/report.dart';
@@ -81,8 +82,9 @@ class _ReportViewState extends State<ReportView> {
       ),
       const SizedBox(height: 8),
       if (_loading && _data == null) ...[
-        const SizedBox(height: 120),
-        const Center(child: CircularProgressIndicator()),
+        // const SizedBox(height: 120),
+        // const Center(child: CircularProgressIndicator()),
+        const ReportShimmer(),
       ] else if (_error != null && _data == null) ...[
         _ErrorView(message: _error!, onRetry: _fetch),
       ] else ...[
