@@ -8,6 +8,7 @@ import 'package:app/data/dto/room_dto.dart';
 import 'package:app/data/services/notifications/notification_service.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:app/Presentation/widgets/gradient_button.dart';
+import 'package:app/Presentation/widgets/confirm_action_dialog.dart';
 
 class RegistrationDetail extends StatefulWidget {
   final AppNotification notification;
@@ -111,13 +112,13 @@ class _RegistrationDetailState extends State<RegistrationDetail> {
   Future<void> _reject() async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Reject registration'),
+      builder: (_) => ConfirmActionDialog(
+        title: 'Reject registration',
         content: const Text('Are you sure you want to reject this registration?'),
-        actions: [
-          TextButton(onPressed: () => Get.back(result: false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Get.back(result: true), child: const Text('Reject')),
-        ],
+        cancelLabel: 'Cancel',
+        confirmLabel: 'Reject',
+        confirmDestructive: true,
+        avatarIcon: Icons.block,
       ),
     );
     if (ok != true) return;

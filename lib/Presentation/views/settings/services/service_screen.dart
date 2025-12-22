@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 import 'package:app/Presentation/provider/settings/service_provider.dart';
 import 'widgets/service_card.dart';
+import 'package:app/Presentation/widgets/confirm_action_dialog.dart';
 
 class ServiceScreen extends StatelessWidget {
   const ServiceScreen({super.key});
@@ -226,26 +227,15 @@ class ServiceScreen extends StatelessWidget {
                       final prov = context.read<ServiceState>();
                       final confirm = await showDialog<bool>(
                         context: context,
-                        builder: (c) => AlertDialog(
-                          title: const Text('Delete service?'),
-                          content: Text(
-                            'Are you sure you want to delete "${item.name}"?',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Get.back(result: false),
-                              child: const Text('Cancel'),
-                            ),
-                            FilledButton(
-                              onPressed: () => Get.back(result: true),
-                              child: const Text('Delete'),
-                            ),
-                          ],
+                        builder: (c) => ConfirmActionDialog(
+                          title: 'Delete service?',
+                          content: Text('Are you sure you want to delete "${item.name}"?'),
+                          cancelLabel: 'Cancel',
+                          confirmLabel: 'Delete',
+                          confirmDestructive: true,
                         ),
                       );
-                      if (confirm == true) {
-                        await prov.delete(item.id);
-                      }
+                      if (confirm == true) await prov.delete(item.id);
                     },
                   );
                 },

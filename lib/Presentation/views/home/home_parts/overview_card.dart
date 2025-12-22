@@ -24,7 +24,7 @@ class OverviewCard extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(color: Colors.black.withValues(alpha :0.04), blurRadius: 8, offset: const Offset(0, 2)),
         ],
       ),
       padding: const EdgeInsets.all(14),
@@ -86,8 +86,11 @@ class ProgressRing extends StatelessWidget {
               painter: _GradientProgressPainter(
                 progress: ratio.clamp(0.0, 1.0),
                 strokeWidth: 10,
-                gradient: AppColors.primaryGradient,
-                backgroundColor: AppColors.primaryColor.withValues(alpha: 0.15),
+                // If fully paid, use a solid primary color; otherwise use the app gradient
+                gradient: (ratio >= 1.0)
+                    ? LinearGradient(colors: [AppColors.primaryColor, AppColors.primaryColor])
+                    : AppColors.primaryGradient,
+                backgroundColor: AppColors.primaryColor.withOpacity(0.15),
               ),
             ),
           ),

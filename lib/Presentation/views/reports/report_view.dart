@@ -31,7 +31,8 @@ class _ReportViewState extends State<ReportView> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = context.read<AuthViewModel>();
       setState(() {
-        _landlordId = auth.user?.id;
+        // If auth user is not available (dev/demo), fall back to landlord id 1
+        _landlordId = auth.user?.id ?? 1;
       });
       _fetch();
     });
@@ -326,10 +327,11 @@ class _TotalIncome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final d = data;
-    final income = d?.totalIncome ?? 2262.50;
-    // Show total income amount in the donut. Use a full ring to represent the amount.
-    final paid = d?.paid ?? 0; final total = d?.totalInvoices ?? 0;
-    final ratio = 1.0; // always show full donut; center shows actual amount
+    final income = d?.totalIncome ?? 0.0;
+    // Show total income amount in the donut. Use paid/total to represent progress when available.
+    final paid = d?.paid ?? 0;
+    final total = d?.totalInvoices ?? 0;
+    final ratio = (total > 0) ? (paid / total).clamp(0.0, 1.0) : 1.0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -352,10 +354,7 @@ class _TotalIncome extends StatelessWidget {
         const SizedBox(height: 12),
         Divider(color: AppColors.dividerColor.withValues(alpha: 0.8)),
         const SizedBox(height: 8),
-        ...((d?.legends ?? [
-          LegendItem('Building A', '11/15 Paid', const Color(0xFF4D8CE4)),
-          LegendItem('Building B', '11/15 Paid', const Color(0xFF22369D)),
-        ])).map((e) => Padding(
+        ...((d?.legends ?? [])).map((e) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 2),
           child: Row(
             children: [
@@ -375,12 +374,7 @@ class _Breakdown extends StatelessWidget {
   final ReportData? data; const _Breakdown({required this.data});
   @override
   Widget build(BuildContext context) {
-    final rows = data?.breakdown ?? [
-      BreakdownItem('Room Total', 1230.00, 22),
-      BreakdownItem('Services Total', 1230.00, 22),
-      BreakdownItem('Water Total', 1230.00, 22),
-      BreakdownItem('Electricity Total', 1230.00, 22),
-    ];
+    final rows = data?.breakdown ?? [];
 
     final total = rows.fold<double>(0, (p, e) => p + e.amount);
 

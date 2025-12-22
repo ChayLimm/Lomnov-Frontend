@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 import 'package:app/Presentation/provider/settings/role_provider.dart';
 import '../services/widgets/service_card.dart';
+import 'package:app/Presentation/widgets/confirm_action_dialog.dart';
 
 class RoleScreen extends StatelessWidget {
   const RoleScreen({super.key});
@@ -131,18 +132,15 @@ class RoleScreen extends StatelessWidget {
                       final prov = context.read<RoleState>();
                       final confirm = await showDialog<bool>(
                         context: context,
-                        builder: (c) => AlertDialog(
-                          title: const Text('Delete role?'),
+                        builder: (c) => ConfirmActionDialog(
+                          title: 'Delete role?',
                           content: Text('Are you sure you want to delete "${item.roleName}"?'),
-                          actions: [
-                            TextButton(onPressed: () => Get.back(result: false), child: const Text('Cancel')),
-                            FilledButton(onPressed: () => Get.back(result: true), child: const Text('Delete')),
-                          ],
+                          cancelLabel: 'Cancel',
+                          confirmLabel: 'Delete',
+                          confirmDestructive: true,
                         ),
                       );
-                      if (confirm == true) {
-                        await prov.delete(item.id);
-                      }
+                      if (confirm == true) await prov.delete(item.id);
                     },
                   );
                 },
