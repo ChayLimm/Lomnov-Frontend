@@ -1,4 +1,5 @@
 import 'package:app/Presentation/themes/app_colors.dart';
+import 'package:app/Presentation/views/home/home_parts/receipt_shimmer.dart';
 import 'package:flutter/material.dart';
 import 'package:app/data/services/payments_service.dart';
 import 'package:app/data/services/auth_service/auth_service.dart';
@@ -108,10 +109,7 @@ class _ReceiptsSectionState extends State<ReceiptsSection> {
             future: _paymentsFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return SizedBox(
-                  height: 120,
-                  child: Center(child: CircularProgressIndicator()),
-                );
+                return const ReceiptShimmer();
               }
               if (snapshot.hasError) {
                 final err = snapshot.error;
