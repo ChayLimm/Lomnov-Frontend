@@ -20,7 +20,7 @@ class _SignUpViewState extends State<SignUpView> {
   final _phoneCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
-  final _tokenCtrl = TextEditingController();
+  
   bool _obscure = true;
   bool _obscure2 = true;
   bool _agree = false;
@@ -33,7 +33,7 @@ class _SignUpViewState extends State<SignUpView> {
     _phoneCtrl.dispose();
     _passCtrl.dispose();
     _confirmCtrl.dispose();
-    _tokenCtrl.dispose();
+    //_tokenCtrl removed - token will be collected in a separate page
     super.dispose();
   }
 
@@ -128,14 +128,6 @@ class _SignUpViewState extends State<SignUpView> {
                         onSubmitted: (_) => _submit(vm),
                       ),
                       const SizedBox(height: 12),
-                      TextField(
-                        controller: _tokenCtrl,
-                        textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          labelText: ' Telegram Token',
-                          suffixIcon: Icon(Icons.vpn_key_outlined),
-                        ),
-                      ),
                       const SizedBox(height: 12),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -207,8 +199,6 @@ class _SignUpViewState extends State<SignUpView> {
     final phone = _phoneCtrl.text.trim();
     final pass = _passCtrl.text;
     final confirm = _confirmCtrl.text;
-    final token = _tokenCtrl.text.trim();
-
     if (name.isEmpty) {
       _showMessage('Please enter your full name');
       return;
@@ -229,10 +219,6 @@ class _SignUpViewState extends State<SignUpView> {
       _showMessage('Passwords do not match');
       return;
     }
-    if (token.isEmpty) {
-      _showMessage('Please enter your token');
-      return;
-    }
     if (!_agree) {
       _showMessage('You must agree to the Terms and Conditions');
       return;
@@ -248,7 +234,6 @@ class _SignUpViewState extends State<SignUpView> {
         'email': email,
         'phonenumber': phone,
         'password': pass,
-        'token': token,
       },
     );
   }

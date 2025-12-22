@@ -624,7 +624,7 @@ class _RoomFormViewState extends State<RoomFormView> {
       backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.backgroundColor,
-        title: Text(widget.isEdit ? 'Edit Room' : 'Add Room'),
+        title: Text(widget.isEdit ? 'Edit Room' : 'Add Room', style: TextStyle(color: Colors.black)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

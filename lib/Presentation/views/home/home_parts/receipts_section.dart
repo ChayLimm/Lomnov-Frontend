@@ -5,6 +5,9 @@ import 'package:app/data/services/payments_service.dart';
 import 'package:app/data/services/auth_service/auth_service.dart';
 import 'package:app/domain/models/payment.dart';
 import 'package:app/data/dto/paginated_result.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'dart:typed_data';
+import 'package:dio/dio.dart';
 
 // --- Configurable values (change these to update the receipts UI) ---
 const double kReceiptIconContainerSize = 56.0;
@@ -13,6 +16,8 @@ const int kReceiptItemCount = 5;
 const double kReceiptSeparatorHeight = 16.0;
 final Gradient kReceiptIconBackgroundGradient = AppColors.primaryGradient;
 final Color kReceiptIconBackgroundColor = AppColors.primaryColor.withValues(alpha: 0.1);
+// fallback example PDF URL when payment doesn't provide one
+const String kFallbackReceiptPdfUrl = 'https://mustang-tidy-usefully.ngrok-free.app/storage/invoices/receipt_20_20251222085956.pdf';
 
 class ReceiptsSection extends StatefulWidget {
   const ReceiptsSection({super.key});
@@ -234,62 +239,165 @@ class _ReceiptItem extends StatelessWidget {
       badgeTextColor = Colors.black87;
     }
 
-    return Row(
-      children: [
-        Container(
-          width: kReceiptIconContainerSize,
-          height: kReceiptIconContainerSize,
-          decoration: BoxDecoration(
-          color: kReceiptIconBackgroundColor,
-            // gradient: kReceiptIconBackgroundGradient,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Center(
-            child: ShaderMask(
-              shaderCallback: (bounds) => AppColors.primaryGradient.createShader(bounds),
-              blendMode: BlendMode.srcIn,
-              child: Icon(
-                Icons.receipt_long,
-                color: Colors.white,
-                size: kReceiptIconSize,
+    return GestureDetector(
+      onTap: () => _openPdf(context),
+      child: Row(
+        children: [
+          Container(
+            width: kReceiptIconContainerSize,
+            height: kReceiptIconContainerSize,
+            decoration: BoxDecoration(
+              color: kReceiptIconBackgroundColor,
+              // gradient: kReceiptIconBackgroundGradient,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: ShaderMask(
+                shaderCallback: (bounds) => AppColors.primaryGradient.createShader(bounds),
+                blendMode: BlendMode.srcIn,
+                child: Icon(
+                  Icons.receipt_long,
+                  color: Colors.white,
+                  size: kReceiptIconSize,
+                ),
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(roomText, style: TextStyle(color: Colors.grey)),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                title,
+                totalText,
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              Text(roomText, style: TextStyle(color: Colors.grey)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: badgeBg,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  badgeText,
+                  style: TextStyle(color: badgeTextColor, fontSize: 10),
+                ),
+              ),
             ],
           ),
-        ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              totalText,
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: badgeBg,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                badgeText,
-                style: TextStyle(color: badgeTextColor, fontSize: 10),
-              ),
-            ),
-          ],
-        ),
-      ],
+        ],
+      ),
+    );
+  }
+
+  void _openPdf(BuildContext context) {
+    final url = (payment?.receiptUrl != null && payment!.receiptUrl!.isNotEmpty)
+        ? payment!.receiptUrl!
+        : kFallbackReceiptPdfUrl;
+    final String title = payment != null ? 'Invoice#${payment!.id}' : 'Invoice#143241234';
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => _PdfViewerPage(url: url, title: title)));
+  }
+}
+
+class _PdfViewerPage extends StatefulWidget {
+  final String url;
+  final String title;
+
+  const _PdfViewerPage({required this.url, required this.title});
+
+  @override
+  State<_PdfViewerPage> createState() => _PdfViewerPageState();
+}
+
+class _PdfViewerPageState extends State<_PdfViewerPage> {
+  bool _loading = true;
+  String? _error;
+  Uint8List? _pdfBytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPdf();
+  }
+
+  Future<void> _fetchPdf() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+      _pdfBytes = null;
+    });
+
+    try {
+      final dio = Dio();
+      final resp = await dio.get<List<int>>(
+        widget.url,
+        options: Options(responseType: ResponseType.bytes, followRedirects: true),
+      );
+
+      if (resp.statusCode != 200) {
+        setState(() {
+          _error = 'HTTP ${resp.statusCode}';
+          _loading = false;
+        });
+        return;
+      }
+
+      final bytes = Uint8List.fromList(resp.data ?? <int>[]);
+      if (bytes.length < 4 || bytes[0] != 0x25 || bytes[1] != 0x50 || bytes[2] != 0x44 || bytes[3] != 0x46) {
+        setState(() {
+          _error = 'Downloaded file is not a valid PDF (bad signature)';
+          _loading = false;
+        });
+        return;
+      }
+
+      setState(() {
+        _pdfBytes = bytes;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.of(context).maybePop(),
+          )
+        ],
+      ),
+      body: Stack(
+        children: [
+          if (_error != null)
+            Center(child: Text('Failed to load PDF: $_error'))
+          else if (_pdfBytes != null)
+            SfPdfViewer.memory(_pdfBytes!)
+          else
+            const SizedBox.shrink(),
+          if (_loading)
+            const Center(child: CircularProgressIndicator()),
+        ],
+      ),
     );
   }
 }

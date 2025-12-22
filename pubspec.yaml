@@ -54,6 +54,7 @@ dependencies:
   flutter_pdfview: ^1.4.3
   path_provider: ^2.1.5
   dio: ^5.9.0
+  syncfusion_flutter_pdfviewer: ^32.1.19
   
 dev_dependencies:
   flutter_test:

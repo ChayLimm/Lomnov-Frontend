@@ -5,7 +5,7 @@ import 'package:app/Presentation/widgets/search_bar.dart';
 import 'package:app/Presentation/views/buildings/widgets/building_card.dart';
 import 'package:app/Presentation/widgets/error1.dart';
 import 'package:app/Presentation/widgets/empty1.dart';
-import 'package:app/Presentation/views/home/home_parts/home_shimmer.dart';
+import 'package:app/Presentation/views/buildings/widgets/building_shimmer.dart';
 import 'package:get/get.dart';
 import 'package:app/Presentation/views/buildings/add_building_view.dart';
 import 'package:app/Presentation/views/buildings/building_detail_view.dart';
@@ -229,8 +229,8 @@ class _BuildingsViewState extends State<BuildingsView> {
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => SizedBox(
-                      height: 100,
-                      child: HomeShimmer(),
+                      height: 160,
+                      child: const BuildingShimmer(),
                     ),
                     childCount: 6,
                   ),

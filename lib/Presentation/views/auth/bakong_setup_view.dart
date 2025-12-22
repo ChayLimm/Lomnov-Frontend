@@ -5,6 +5,7 @@ import 'package:app/Presentation/widgets/gradient_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
+import 'register_telegram_token_view.dart';
 
 class BakongController extends GetxController {
   String? name;
@@ -39,7 +40,7 @@ class _BakongSetupViewState extends State<BakongSetupView> {
   final _bakongIdCtrl = TextEditingController();
   final _bakongNameCtrl = TextEditingController();
   final _bakongLocationCtrl = TextEditingController();
-  final _tokenCtrl = TextEditingController();
+  // token input moved to a separate page
 
   late final BakongController ctrl;
 
@@ -58,7 +59,6 @@ class _BakongSetupViewState extends State<BakongSetupView> {
     _bakongIdCtrl.dispose();
     _bakongNameCtrl.dispose();
     _bakongLocationCtrl.dispose();
-    _tokenCtrl.dispose();
     super.dispose();
   }
 
@@ -117,15 +117,7 @@ class _BakongSetupViewState extends State<BakongSetupView> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      TextField(
-                        controller: _tokenCtrl,
-                        textInputAction: TextInputAction.done,
-                        decoration: const InputDecoration(
-                          labelText: 'Token',
-                          suffixIcon: Icon(Icons.vpn_key_outlined),
-                        ),
-                        onSubmitted: (_) => _create(vm),
-                      ),
+                      const SizedBox.shrink(),
                     ],
                   ),
                 ),
@@ -147,7 +139,6 @@ class _BakongSetupViewState extends State<BakongSetupView> {
     final id = _bakongIdCtrl.text.trim();
     final name = _bakongNameCtrl.text.trim();
     final location = _bakongLocationCtrl.text.trim();
-    final token = _tokenCtrl.text.trim();
 
     if (id.isEmpty) {
       _showMessage('Please enter your Bakong ID');
@@ -161,29 +152,23 @@ class _BakongSetupViewState extends State<BakongSetupView> {
       _showMessage('Please enter your Bakong location');
       return;
     }
-    if (token.isEmpty) {
-      _showMessage('Please enter your Bakong token');
-      return;
-    }
-
     ctrl.bakongId = id;
     ctrl.bakongName = name;
     ctrl.bakongLocation = location;
-    ctrl.token = token;
 
     final payload = {
       'name': ctrl.name,
       'email': ctrl.email,
       'phonenumber': ctrl.phoneNumber,
       'password': ctrl.password,
-      'token': token, // use the entered token
       'bakong_id': ctrl.bakongId,
       'bakong_name': ctrl.bakongName,
       'bakong_location': ctrl.bakongLocation,
       'device_id': ctrl.deviceId,
     };
 
-    vm.registerWithPayload(payload);
+    // Navigate to token registration page to collect Telegram token
+    Get.to(() => const RegisterTelegramTokenView(), arguments: payload);
   }
 
   void _showMessage(String message) {
