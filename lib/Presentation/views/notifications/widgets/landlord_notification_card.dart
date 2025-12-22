@@ -11,7 +11,9 @@ class LandlordNotificationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return ListTile(
-      onTap: onTap,
+      onTap: (){
+        print("object");
+      },
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       leading: CircleAvatar(
         radius: 24,

@@ -48,6 +48,11 @@ dependencies:
   crystal_navigation_bar: ^1.0.4
   mobile_device_identifier: ^0.0.3
   google_nav_bar: ^5.0.7
+  url_launcher: ^6.3.2
+  webview_flutter: ^4.13.0
+  flutter_pdfview: ^1.4.3
+  path_provider: ^2.1.5
+  dio: ^5.9.0
   
 dev_dependencies:
   flutter_test:
