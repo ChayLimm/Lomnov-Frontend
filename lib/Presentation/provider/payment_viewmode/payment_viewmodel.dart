@@ -290,11 +290,19 @@ void setElectricity(double data) {
 
       final res = await roomService.fetchRooms(buildingId: buildingId);
 
-      List<RoomDto> rooms = res.items; // Handle null items
-      rooms.forEach((room) {
-        RoomModel temp = room.toDomain();
-        _rooms.add(temp);
-      });
+      // Convert and deduplicate rooms by id to avoid duplicates coming
+      // from backend or multiple fetches.
+      final List<RoomDto> rooms = res.items; // Handle null items
+      final Map<int, RoomModel> unique = {};
+      for (var room in rooms) {
+        final temp = room.toDomain();
+        unique[temp.id] = temp;
+      }
+
+      _rooms.addAll(unique.values);
+      // debug
+      print('Loaded rooms count=${_rooms.length} for buildingId=$buildingId');
+      print('Rooms: ${_rooms.map((r) => r.roomNumber).toList()}');
     } catch (error) {
       print('Error loading rooms: $error');
     } finally {

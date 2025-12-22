@@ -49,7 +49,12 @@ class RoomFetchService extends ApiBase {
       'page': page.toString(),
       'per_page': perPage.toString(),
     };
-    if (buildingId != null) query['buildingId'] = buildingId.toString();
+    if (buildingId != null) {
+      // Some backends expect camelCase `buildingId`, others expect snake_case `building_id`.
+      // Send both to ensure the filter is applied regardless of naming.
+      query['buildingId'] = buildingId.toString();
+      query['building_id'] = buildingId.toString();
+    }
     uri = uri.replace(queryParameters: query);
 
     final headers = await buildHeaders();
@@ -84,7 +89,34 @@ class RoomFetchService extends ApiBase {
       pagination = Pagination(currentPage: page, perPage: perPage, total: list.length, lastPage: page);
     }
 
-    final items = RoomDto.fromJsonList(list);
+    // Filter out deleted/archived rooms and ensure they belong to the
+    // requested building (client-side safety) before converting to DTOs.
+    final filtered = list.where((element) {
+      if (element is! Map<String, dynamic>) return false;
+      final data = element['data'] ?? element;
+
+      // If a buildingId filter was requested, enforce it client-side
+      if (buildingId != null) {
+        final bId = (data['building_id'] ?? data['buildingId']);
+        if (bId == null) return false;
+        final parsed = (bId is num) ? bId.toInt() : int.tryParse(bId.toString());
+        if (parsed == null || parsed != buildingId) return false;
+      }
+
+      // Exclude if deleted_at is present
+      if (data['deleted_at'] != null) return false;
+
+      // Exclude if explicit boolean flag is set
+      if (data['is_deleted'] == true || data['deleted'] == true) return false;
+
+      // Exclude by common status values
+      final status = (data['status'] ?? '').toString().toLowerCase();
+      if (status == 'deleted' || status == 'archived' || status == 'inactive') return false;
+
+      return true;
+    }).toList();
+
+    final items = RoomDto.fromJsonList(filtered);
     return RoomsResponse(items: items, pagination: pagination);
   }
 

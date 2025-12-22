@@ -93,10 +93,9 @@ class _PaymentDetailState extends State<PaymentDetail> {
                       }).toList(),
                       onChanged: (BuildingModel? newValue) {
                         if (newValue != null) {
+                          // selectBuilding already loads rooms for the building,
+                          // avoid calling loadRoomFromBuilding twice which caused duplicates.
                           paymentProvider.selectBuilding(newValue);
-                          paymentProvider.loadRoomFromBuilding(
-                            newValue.id,
-                          );
                         }
                       },
                       validator: (value) =>
