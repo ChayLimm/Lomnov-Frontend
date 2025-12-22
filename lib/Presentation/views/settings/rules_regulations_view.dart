@@ -57,7 +57,7 @@ class _RulesRegulationsViewState extends State<RulesRegulationsView> {
       backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.backgroundColor,
-        title: const Text('Rules & Regulations'),
+        title: const Text('Rules & Regulations', style: TextStyle(color: Colors.black)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

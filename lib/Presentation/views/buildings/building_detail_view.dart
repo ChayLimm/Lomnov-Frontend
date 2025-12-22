@@ -9,6 +9,9 @@ import 'package:app/Presentation/widgets/error1.dart';
 import 'package:app/Presentation/widgets/empty1.dart';
 import 'package:app/Presentation/widgets/confirm_action_dialog.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
+import 'package:app/Presentation/views/home/home_parts/home_shimmer.dart';
+import 'package:app/Presentation/widgets/inline_shimmer.dart';
+import 'package:app/Presentation/views/buildings/building_detail_shimmer.dart';
 import 'package:app/data/services/rooms_service/fetch_service.dart';
 import 'package:app/Presentation/views/rooms/add_room_view.dart';
 import 'package:app/Presentation/views/rooms/edit_room_view.dart';
@@ -79,8 +82,8 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
     backgroundColor: const Color(0xFFF8F8F8),
     extendBodyBehindAppBar: true, 
     body: _loading
-        ? const Center(child: CircularProgressIndicator())
-        : _error != null
+      ? const BuildingDetailShimmer()
+      : _error != null
             ? RefreshIndicator(
                 onRefresh: _load,
                 child: ListView(

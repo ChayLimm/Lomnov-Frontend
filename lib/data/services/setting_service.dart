@@ -36,16 +36,22 @@ class ApiSettingService extends ApiBase implements SettingService {
 
   @override
   Future<SettingDto> updateSettings(int userId, Map<String, dynamic> data) async {
-    final uri = buildUri(Endpoints.userSettings(userId)); // Use user-specific endpoint
+    // The user-specific endpoint (`/api/settings/user/:id/`) typically
+    // supports GET only. To update the settings resource we must target
+    // the settings resource by its numeric id (e.g. `/api/settings/{id}`).
+    // Fetch the current settings for the user to obtain the resource id.
+    final current = await fetchSettings(userId);
+    final uri = buildUri(Endpoints.settingById(current.id));
     final headers = await buildHeaders();
     headers['Content-Type'] = 'application/json';
-    // First, try PUT (common for full updates).
+
+    // Try PUT first (common for full updates).
     var res = await HttpErrorHandler.executeRequest(
       () => httpClient.put(uri, headers: headers, body: json.encode(data)),
     );
 
     // If server returns 405 Method Not Allowed, retry using POST with
-    // X-HTTP-Method-Override: PATCH (method-override) which some servers expect.
+    // X-HTTP-Method-Override: PATCH which some proxies/backends accept.
     if (res.statusCode == 405) {
       final overrideHeaders = Map<String, String>.from(headers);
       overrideHeaders['X-HTTP-Method-Override'] = 'PATCH';
@@ -90,7 +96,10 @@ class ApiSettingService extends ApiBase implements SettingService {
 
   @override
   Future<void> deleteSettings(int userId) async {
-    final uri = buildUri(Endpoints.userSettings(userId));
+    // Delete the settings resource by id. The user-specific route may only
+    // support GET/HEAD, so fetch the settings first to get the resource id.
+    final current = await fetchSettings(userId);
+    final uri = buildUri(Endpoints.settingById(current.id));
     final headers = await buildHeaders();
     headers['Content-Type'] = 'application/json';
 

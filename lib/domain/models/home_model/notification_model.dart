@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// Domain model for App Notification
 /// Represents a notification for the user
 class AppNotification {
@@ -12,6 +14,7 @@ class AppNotification {
   final String? lastName;
   final String? email;
   final String? phone;
+  final Map<String, dynamic>? payload;
 
   const AppNotification({
     required this.id,
@@ -25,6 +28,7 @@ class AppNotification {
     this.lastName,
     this.email,
     this.phone,
+    this.payload,
   });
 
   /// Check if notification is recent (within 24 hours)
@@ -69,6 +73,7 @@ class AppNotification {
     String? lastName,
     String? email,
     String? phone,
+    Map<String, dynamic>? payload,
   }) {
     return AppNotification(
       id: id ?? this.id,
@@ -82,6 +87,7 @@ class AppNotification {
       lastName: lastName ?? this.lastName,
       email: email ?? this.email,
       phone: phone ?? this.phone,
+      payload: payload ?? this.payload,
     );
   }
 
@@ -105,7 +111,8 @@ class AppNotification {
           firstName == other.firstName &&
           lastName == other.lastName &&
           email == other.email &&
-          phone == other.phone;
+          phone == other.phone &&
+          mapEquals(payload, other.payload);
 
   @override
   int get hashCode =>
@@ -119,10 +126,11 @@ class AppNotification {
       (firstName?.hashCode ?? 0) ^
       (lastName?.hashCode ?? 0) ^
       (email?.hashCode ?? 0) ^
-      (phone?.hashCode ?? 0);
+      (phone?.hashCode ?? 0) ^
+      (payload == null ? 0 : payload.hashCode);
 
   @override
   String toString() {
-    return 'AppNotification(id: $id, title: $title, isRead: $isRead, createdAt: $createdAt, firstName: $firstName, lastName: $lastName, email: $email, phone: $phone)';
+    return 'AppNotification(id: $id, title: $title, isRead: $isRead, createdAt: $createdAt, firstName: $firstName, lastName: $lastName, email: $email, phone: $phone, payload: $payload)';
   }
 }

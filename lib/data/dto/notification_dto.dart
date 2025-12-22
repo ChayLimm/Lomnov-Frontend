@@ -14,6 +14,7 @@ class NotificationDto {
   final String? lastName;
   final String? email;
   final String? phone;
+  final Map<String, dynamic>? payload;
 
   const NotificationDto({
     required this.id,
@@ -27,6 +28,7 @@ class NotificationDto {
     this.lastName,
     this.email,
     this.phone,
+    this.payload,
   });
 
   /// Create from API JSON response
@@ -84,9 +86,11 @@ class NotificationDto {
     String? em;
     String? ph;
     String? st;
+    Map<String, dynamic>? rawPayload;
     if (data is Map<String, dynamic>) {
       final payload = data['payload'];
       if (payload is Map<String, dynamic>) {
+        rawPayload = payload;
         fn = (payload['first_name'] ?? payload['firstName'])?.toString();
         ln = (payload['last_name'] ?? payload['lastName'])?.toString();
         em = (payload['email'] ?? payload['emailAddress'])?.toString();
@@ -113,6 +117,7 @@ class NotificationDto {
       lastName: ln,
       email: em,
       phone: ph,
+      payload: rawPayload,
     );
   }
 
@@ -140,6 +145,7 @@ class NotificationDto {
       lastName: lastName,
       email: email,
       phone: phone,
+      payload: payload,
     );
   }
 

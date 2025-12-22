@@ -101,4 +101,5 @@ class Endpoints {
 
   static String settings = '/api/settings';
   static String userSettings(int userId) => '/api/settings/user/$userId/';
+  static String settingById(int id) => '/api/settings/$id';
 }

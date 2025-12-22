@@ -5,6 +5,7 @@ import 'package:app/Presentation/widgets/search_bar.dart';
 import 'package:app/Presentation/views/buildings/widgets/building_card.dart';
 import 'package:app/Presentation/widgets/error1.dart';
 import 'package:app/Presentation/widgets/empty1.dart';
+import 'package:app/Presentation/views/home/home_parts/home_shimmer.dart';
 import 'package:get/get.dart';
 import 'package:app/Presentation/views/buildings/add_building_view.dart';
 import 'package:app/Presentation/views/buildings/building_detail_view.dart';
@@ -173,7 +174,7 @@ class _BuildingsViewState extends State<BuildingsView> {
                   tooltip: 'Back',
                 )
               : null,
-          title: const Text('Buildings'),
+          title: const Text('Buildings', style: TextStyle(color: Colors.black)),
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
           ),
@@ -225,9 +226,14 @@ class _BuildingsViewState extends State<BuildingsView> {
             slivers: [
               // Search and Add moved into AppBar bottom
               if (_loading)
-                const SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(child: CircularProgressIndicator()),
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => SizedBox(
+                      height: 100,
+                      child: HomeShimmer(),
+                    ),
+                    childCount: 6,
+                  ),
                 )
               else if (_error != null)
                 SliverFillRemaining(

@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:app/Presentation/views/buildings/add_building_view.dart';
 import 'package:app/Presentation/views/rooms/add_room_view.dart';
 import 'package:app/Presentation/views/buildings/building_detail_view.dart';
@@ -21,11 +22,8 @@ import 'package:app/Presentation/views/settings/services/service_view.dart';
 import 'package:app/Presentation/views/settings/roles/role_view.dart';
 import 'package:app/Presentation/views/settings/contact/contact_us_view.dart';
 import 'package:app/data/services/mobile_device_identifier.dart';
-
 import 'package:app/Presentation/views/auth/bakong_setup_view.dart';
-
 import 'package:webview_flutter_android/webview_flutter_android.dart';
-// Import for iOS
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
 
@@ -74,7 +72,15 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       initialRoute: initialRoute,
-  builder: (context, child) => AppBackground(addOverlay: false, child: child ?? const SizedBox()),
+      theme: ThemeData(
+        textTheme: GoogleFonts.interTextTheme(),
+        primaryTextTheme: GoogleFonts.interTextTheme(),
+        fontFamily: GoogleFonts.inter().fontFamily,
+        appBarTheme: AppBarTheme(
+          titleTextStyle: GoogleFonts.inter(textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.white)),
+        ),
+      ),
+      builder: (context, child) => AppBackground(addOverlay: false, child: child ?? const SizedBox()),
       getPages: [
         GetPage(name: '/', page: () => const LoginView()),
         GetPage(name: '/signup', page: () => const SignUpView()),
@@ -119,7 +125,6 @@ class MyApp extends StatelessWidget {
             return RoomDetailView(roomId: id ?? 0);
           },
         ),
-
       ],
     );
   }

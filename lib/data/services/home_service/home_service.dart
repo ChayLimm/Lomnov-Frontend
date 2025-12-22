@@ -46,7 +46,7 @@ class HomeService {
           // Strict status-based classification: only use the status string
           // reported by the payments endpoint. This avoids inferring paid
           // from transaction ids or receipts.
-          final st = (p.status ?? '').toLowerCase();
+          final st = (p.status).toLowerCase();
 
           // debug print each payment's key fields
           // ignore: avoid_print

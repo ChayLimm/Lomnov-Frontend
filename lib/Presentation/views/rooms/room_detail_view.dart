@@ -1,5 +1,6 @@
 import 'package:app/data/services/rooms_service/fetch_service.dart';
 import 'package:flutter/material.dart';
+import 'package:app/Presentation/widgets/inline_shimmer.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
@@ -435,10 +436,11 @@ class _RoomDetailViewState extends State<RoomDetailView> {
                         child: Consumer<RoomServicesViewModel>(
                           builder: (context, viewModel, child) {
                             if (viewModel.isLoading) {
-                              return const Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(16.0),
-                                  child: CircularProgressIndicator(),
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 8.0),
+                                child: SizedBox(
+                                  height: 56,
+                                  child: CardShimmer(),
                                 ),
                               );
                             }
@@ -563,10 +565,14 @@ class _RoomDetailViewState extends State<RoomDetailView> {
                         child: Consumer<ContractViewModel>(
                           builder: (context, viewModel, child) {
                             if (viewModel.isLoading) {
-                              return const Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(16.0),
-                                  child: CircularProgressIndicator(),
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 8.0),
+                                child: Column(
+                                  children: [
+                                    InlineShimmer(height: 14),
+                                    SizedBox(height: 8),
+                                    InlineShimmer(height: 14),
+                                  ],
                                 ),
                               );
                             }

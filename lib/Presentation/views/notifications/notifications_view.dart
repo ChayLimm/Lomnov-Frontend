@@ -5,6 +5,8 @@ import 'package:app/Presentation/widgets/empty1.dart';
 import 'package:app/Presentation/widgets/error1.dart';
 import 'package:app/Presentation/views/notifications/widgets/landlord_notification_card.dart';
 import 'package:app/Presentation/views/notifications/registration_detail.dart';
+import 'package:app/Presentation/views/payment/payment_view.dart';
+import 'package:app/Presentation/views/notifications/payment_detail.dart';
 import 'package:get/get.dart';
 import 'package:app/Presentation/themes/text_styles.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
@@ -197,16 +199,24 @@ class _Body extends StatelessWidget {
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final item = items[index];
-        return LandlordNotificationCard(
-          item: item,
-          onTap: () {
-            if ((item.type ?? '').toLowerCase() == 'registration') {
-              Get.to(() => RegistrationDetail(notification: item));
-            } else {
-              context.read<NotificationState>().markAsRead(item.id);
-            }
-          },
-        );
+            return LandlordNotificationCard(
+        item: item,
+        onTap: () {
+          final t = (item.type ?? '').toLowerCase();
+          if (t == 'registration') {
+            Get.to(() => RegistrationDetail(notification: item));
+          } else if (t == 'payment') {
+            // Open payment detail with payload (editable) and mark notification as read
+            final result = Get.to(() => PaymentDetail(payload: item.payload ?? {}));
+            context.read<NotificationState>().markAsRead(item.id);
+            // Optional: handle returned result if needed
+            // result?.then((res) => print('Payment detail result: $res'));
+          } else {
+            // Default behaviour: mark as read
+            context.read<NotificationState>().markAsRead(item.id);
+          }
+        },
+      );
       },
     );
   }

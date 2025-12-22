@@ -19,7 +19,7 @@ class SettingsView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.backgroundColor,
         foregroundColor: AppColors.textPrimary,
-        title: const Text('Settings'),
+        title: const Text('Settings', style: TextStyle(color: Colors.black)),
         elevation: 0,
       ),
       body: ListView(
@@ -53,9 +53,10 @@ class SettingsView extends StatelessWidget {
             children: [
               _Tile(icon: Icons.lightbulb_outline, label: 'Services', onTap: () => Get.to(() => const ServiceView())),
               const _Tile(icon: Icons.account_balance_wallet_outlined, label: 'Account Bakong'),
-              _Tile(icon: Icons.gas_meter_outlined, label: 'Meter Prices', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MeterPricesView()))),
-              _Tile(icon: Icons.rule_rounded, label: 'Rules & Regulations', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RulesRegulationsView()))),
+              _Tile(icon: Icons.gas_meter_outlined, label: 'Meter Prices', onTap: () => Get.to(() => const MeterPricesView())),
+              _Tile(icon: Icons.rule_rounded, label: 'Rules & Regulations', onTap: () => Get.to(() => const RulesRegulationsView())),
               _Tile(icon: Icons.room_service_outlined, label: 'Room Types', onTap: () => Get.to(() => const RoomTypeView())),
+              _Tile(icon: Icons.notifications_outlined, label: 'Consumption', onTap: () =>())
             ],
           ),
           const SizedBox(height: 12),

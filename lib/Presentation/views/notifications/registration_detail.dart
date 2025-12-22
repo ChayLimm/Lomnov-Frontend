@@ -143,7 +143,7 @@ class _RegistrationDetailState extends State<RegistrationDetail> {
       backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.backgroundColor,
-        title: const Text('Registration'),
+        title: const Text('Registration', style: TextStyle(color: Colors.black)),
       ),
       body: SafeArea(
         child: Column(

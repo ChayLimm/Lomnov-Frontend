@@ -61,7 +61,7 @@ class _MeterPricesViewState extends State<MeterPricesView> {
       backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.backgroundColor,
-        title: const Text('Meter Prices'),
+        title: const Text('Meter Prices', style: TextStyle(color: Colors.black)),
         actions: [
           if (_setting != null)
             IconButton(
