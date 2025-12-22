@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:panara_dialogs/panara_dialogs.dart';
 import 'package:app/Presentation/provider/auth_viewmodel.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
+import 'package:app/Presentation/widgets/confirm_action_dialog.dart';
 
 class BuildingsView extends StatefulWidget {
   const BuildingsView({super.key});
@@ -290,22 +291,17 @@ class _BuildingsViewState extends State<BuildingsView> {
                               }
                             },
                             onDelete: () async {
-                              final confirm =
-                                  await PanaraConfirmDialog.showAnimatedGrow(
-                                    context,
-                                    title: "Delete building?",
-                                    message:
-                                        'Are you sure you want to delete "${building.name}"? This action cannot be undone.',
-                                    confirmButtonText: 'Delete',
-                                    cancelButtonText: 'Cancel',
-                                    onTapConfirm: () =>
-                                        Navigator.of(context).pop(true),
-                                    onTapCancel: () =>
-                                        Navigator.of(context).pop(false),
-                                    panaraDialogType: PanaraDialogType.error,
-                                    barrierDismissible: true,
-                                    color: Colors.blue,
-                                  );
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                barrierDismissible: true,
+                                builder: (ctx) => ConfirmActionDialog(
+                                  title: 'Delete building?',
+                                  content: Text('Are you sure you want to delete "${building.name}"? This action cannot be undone.'),
+                                  cancelLabel: 'Cancel',
+                                  confirmLabel: 'Delete',
+                                  confirmDestructive: true,
+                                ),
+                              );
                               if (confirm != true) return;
 
                               // show progress indicator

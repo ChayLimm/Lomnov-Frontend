@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app/Presentation/provider/settings/room_type_provider.dart';
 import 'package:get/get.dart';
+import 'package:app/Presentation/widgets/confirm_action_dialog.dart';
 
 class RoomTypeView extends StatelessWidget {
   const RoomTypeView({Key? key}) : super(key: key);
@@ -196,23 +197,12 @@ class _RoomTypeScreen extends StatelessWidget {
                             onPressed: () async {
                               final confirm = await showDialog<bool>(
                                 context: context,
-                                builder: (c) => AlertDialog(
-                                  title: const Text('Delete room type?'),
-                                  content: Text(
-                                    'Delete "${item.roomTypeName}"?',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(c).pop(false),
-                                      child: const Text('Cancel'),
-                                    ),
-                                    FilledButton(
-                                      onPressed: () =>
-                                          Navigator.of(c).pop(true),
-                                      child: const Text('Delete'),
-                                    ),
-                                  ],
+                                builder: (c) => ConfirmActionDialog(
+                                  title: 'Delete room type?',
+                                  content: Text('Delete "${item.roomTypeName}"?'),
+                                  cancelLabel: 'Cancel',
+                                  confirmLabel: 'Delete',
+                                  confirmDestructive: true,
                                 ),
                               );
                               if (confirm == true) await prov.delete(item.id);

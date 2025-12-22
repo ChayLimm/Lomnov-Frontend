@@ -16,6 +16,7 @@ class RoomDto {
   final dynamic currentContract;
   final String? createdAt;
   final String? updatedAt;
+  final String? imageUrl;
 
   const RoomDto({
     required this.id,
@@ -32,6 +33,7 @@ class RoomDto {
     this.currentContract,
     this.createdAt,
     this.updatedAt,
+    this.imageUrl,
   });
 
   /// Create from API JSON response (handles items wrapped in `data` or raw)
@@ -56,6 +58,7 @@ class RoomDto {
       barcode: (data['barcode'] ?? '').toString(),
       floor: (data['floor'] ?? '').toString(),
       status: (data['status'] ?? '').toString(),
+      imageUrl: (data['image_url'] ?? data['imageUrl'] ?? data['image'])?.toString(),
       building: data['building'] is Map ? Map<String, dynamic>.from(data['building']) : null,
       roomType: data['room_type'] is Map ? Map<String, dynamic>.from(data['room_type']) : null,
       contracts: (data['contracts'] as List?) ?? const [],
@@ -75,6 +78,7 @@ class RoomDto {
     'barcode': barcode,
     'floor': floor,
     'status': status,
+    'image_url': imageUrl,
     'building': building,
     'room_type': roomType,
     'contracts': contracts,
@@ -100,6 +104,7 @@ class RoomDto {
       currentContract: currentContract,
       createdAt: createdAt,
       updatedAt: updatedAt,
+      imgUrl: imageUrl,
     );
   }
 

@@ -97,7 +97,8 @@ class _ReceiptsSectionState extends State<ReceiptsSection> {
                   _tabIndex = 2;
                   _pageIndex = 0;
                   final lid = _landlordId ?? 1;
-                  _paymentsFuture = PaymentsService().fetchLandlordPayments(lid, page: _pageIndex + 1, status: 'paid');
+                  // treat 'paid', 'complete' and 'completed' as paid
+                  _paymentsFuture = PaymentsService().fetchLandlordPayments(lid, page: _pageIndex + 1, status: 'paid,complete,completed');
                 }),
               ),
             ],
@@ -142,7 +143,8 @@ class _ReceiptsSectionState extends State<ReceiptsSection> {
                 onPageChanged: (i) => setState(() {
                   _pageIndex = i;
                   // preserve current tab filter when changing page
-                  final status = _tabIndex == 1 ? 'pending' : _tabIndex == 2 ? 'paid' : null;
+                  // include 'complete' and 'completed' alongside 'paid' when showing paid page
+                  final status = _tabIndex == 1 ? 'pending' : _tabIndex == 2 ? 'paid,complete,completed' : null;
                   final lid = _landlordId ?? 1;
                   _paymentsFuture = PaymentsService().fetchLandlordPayments(lid, page: _pageIndex + 1, status: status);
                 }),
@@ -217,7 +219,8 @@ class _ReceiptItem extends StatelessWidget {
     // Determine whether this payment should be shown as paid/green.
     final statusRaw = p?.status ?? 'pending';
     final status = statusRaw.toLowerCase();
-    final bool isPaidVisual = status == 'paid';
+    // treat 'complete' and 'completed' as paid for visual purposes
+    final bool isPaidVisual = status == 'paid' || status == 'complete' || status == 'completed';
     Color badgeBg;
     Color badgeTextColor;
     final String badgeText = isPaidVisual ? 'Paid' : statusRaw;

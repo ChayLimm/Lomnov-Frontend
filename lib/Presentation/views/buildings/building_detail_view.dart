@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:app/Presentation/widgets/error1.dart';
 import 'package:app/Presentation/widgets/empty1.dart';
+import 'package:app/Presentation/widgets/confirm_action_dialog.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:app/data/services/rooms_service/fetch_service.dart';
 import 'package:app/Presentation/views/rooms/add_room_view.dart';
@@ -341,7 +342,7 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
               alignment: Alignment.topLeft,
                 child: IconButton(
                 style: IconButton.styleFrom(
-                  backgroundColor: const Color.fromRGBO(0, 0, 0, 0.35),
+                  backgroundColor: AppColors.primaryColor.withOpacity(0.35),
                 ),
                 icon: const Icon(Icons.arrow_back, color: Colors.white),
                 onPressed: () => Get.back(),
@@ -407,16 +408,12 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Room'),
+      builder: (ctx) => ConfirmActionDialog(
+        title: 'Delete Room',
         content: Text('Delete room "$roomName"? This action cannot be undone.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
+        cancelLabel: 'Cancel',
+        confirmLabel: 'Delete',
+        confirmDestructive: true,
       ),
     );
 
@@ -440,7 +437,7 @@ class _BuildingDetailViewState extends State<BuildingDetailView> {
   }
   Widget _imgPlaceholder() => Container(
     color: Colors.grey.shade300,
-    child: const Center(child: Icon(Icons.image_not_supported_outlined)),
+    child: Center(child: Icon(Icons.image_not_supported_outlined, color: AppColors.primaryColor)),
   );
 }
 
@@ -469,8 +466,9 @@ class _RoomCard extends StatelessWidget {
       case 'Pending':
         return const Color(0xFFFFF4E5);
       case 'Paid':
+        return AppColors.primaryColor.withOpacity(0.12);
       default:
-        return const Color(0xFFE3F7E9);
+        return AppColors.primaryColor.withOpacity(0.12);
     }
   }
 
@@ -483,8 +481,9 @@ class _RoomCard extends StatelessWidget {
       case 'Pending':
         return const Color(0xFFEF6C00);
       case 'Paid':
+        return AppColors.primaryColor;
       default:
-        return const Color(0xFF2E7D32);
+        return AppColors.primaryColor;
     }
   }
 

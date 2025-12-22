@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 import 'package:app/Presentation/provider/settings/room_type_provider.dart';
 import 'widgets/room_type_card.dart';
+import 'package:app/Presentation/widgets/confirm_action_dialog.dart';
 
 class RoomTypeScreen extends StatelessWidget {
   const RoomTypeScreen({super.key});
@@ -196,24 +197,15 @@ class RoomTypeScreen extends StatelessWidget {
                       final prov = context.read<RoomTypeState>();
                       final confirm = await showDialog<bool>(
                         context: context,
-                        builder: (c) => AlertDialog(
-                          title: const Text('Delete room type?'),
+                        builder: (c) => ConfirmActionDialog(
+                          title: 'Delete room type?',
                           content: Text('Delete "${item.roomTypeName}"?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Get.back(result: false),
-                              child: const Text('Cancel'),
-                            ),
-                            FilledButton(
-                              onPressed: () => Get.back(result: true),
-                              child: const Text('Delete'),
-                            ),
-                          ],
+                          cancelLabel: 'Cancel',
+                          confirmLabel: 'Delete',
+                          confirmDestructive: true,
                         ),
                       );
-                      if (confirm == true) {
-                        await prov.delete(item.id);
-                      }
+                      if (confirm == true) await prov.delete(item.id);
                     },
                   );
                 },

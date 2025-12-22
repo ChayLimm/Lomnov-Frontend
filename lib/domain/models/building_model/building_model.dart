@@ -49,6 +49,7 @@ class RoomModel {
 	final dynamic currentContract;
 	final String? createdAt;
 	final String? updatedAt;
+  final String? imgUrl;
 
 	const RoomModel({
 		required this.id,
@@ -64,7 +65,7 @@ class RoomModel {
 		this.contracts = const [],
 		this.currentContract,
 		this.createdAt,
-		this.updatedAt,
+		this.updatedAt, this.imgUrl,
 	});
 
   void operator [](String other) {}

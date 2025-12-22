@@ -9,6 +9,7 @@ import 'package:app/Presentation/provider/contract_viewmodel.dart';
 import 'package:app/data/implementations/rooms/room_services_repository_impl.dart';
 import 'package:app/data/implementations/contract/contract_repository_impl.dart';
 import 'package:app/Presentation/views/contracts/add_contract_view.dart';
+import 'package:app/Presentation/widgets/confirm_action_dialog.dart';
 
 class RoomDetailView extends StatefulWidget {
   final dynamic room; // RoomModel or Map<String, dynamic>
@@ -382,6 +383,61 @@ class _RoomDetailViewState extends State<RoomDetailView> {
                                   ),
                                   child: Icon(
                                     Icons.edit,
+                                    size: 16,
+                                    color: Colors.grey.shade800,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              // delete icon beside edit
+                              InkWell(
+                                onTap: () async {
+                                  final dynamic arg = widget.room ?? Get.arguments;
+                                  final dynamic byParam = Get.parameters.isNotEmpty ? Get.parameters : null;
+                                  final dynamic effectiveRoomLocal =
+                                      arg ??
+                                      (byParam != null && byParam['id'] != null
+                                          ? {'id': byParam['id']}
+                                          : null) ??
+                                      {};
+                                  final isMapLocal = effectiveRoomLocal is Map<String, dynamic>;
+                                  final int? roomIdLocal = widget.roomId ?? (isMapLocal ? (effectiveRoomLocal['id'] as int?) : (effectiveRoomLocal.id as int?));
+                                  if (roomIdLocal == null) {
+                                    Get.snackbar('Error', 'Room ID not found');
+                                    return;
+                                  }
+
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (ctx) => ConfirmActionDialog(
+                                      title: 'Delete Room',
+                                      content: Text('Delete room "${roomNumber}"? This action cannot be undone.'),
+                                      cancelLabel: 'Cancel',
+                                      confirmLabel: 'Delete',
+                                      confirmDestructive: true,
+                                    ),
+                                  );
+
+                                  if (confirmed != true) return;
+
+                                  try {
+                                    final svc = RoomFetchService();
+                                    await svc.deleteRoom(roomIdLocal);
+                                    Get.back();
+                                    Get.snackbar('Deleted', 'Room deleted');
+                                  } catch (e) {
+                                    Get.snackbar('Error', 'Failed to delete room: $e');
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    Icons.delete_outline,
                                     size: 16,
                                     color: Colors.grey.shade800,
                                   ),
