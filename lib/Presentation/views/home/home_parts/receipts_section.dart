@@ -8,6 +8,8 @@ import 'package:app/data/dto/paginated_result.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:app/utils/browser_utils.dart';
 
 // --- Configurable values (change these to update the receipts UI) ---
 const double kReceiptIconContainerSize = 56.0;
@@ -306,6 +308,12 @@ class _ReceiptItem extends StatelessWidget {
         ? payment!.receiptUrl!
         : kFallbackReceiptPdfUrl;
     final String title = payment != null ? 'Invoice#${payment!.id}' : 'Invoice#143241234';
+    if (kIsWeb) {
+      // On web, avoid CORS issues by opening the PDF in a new tab instead of XHR.
+      openUrlInNewTab(url);
+      return;
+    }
+
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => _PdfViewerPage(url: url, title: title)));
   }
 }
@@ -340,9 +348,15 @@ class _PdfViewerPageState extends State<_PdfViewerPage> {
 
     try {
       final dio = Dio();
+      final token = await AuthService().getToken();
+      final headers = <String, String>{'Accept': 'application/pdf'};
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+
       final resp = await dio.get<List<int>>(
         widget.url,
-        options: Options(responseType: ResponseType.bytes, followRedirects: true),
+        options: Options(responseType: ResponseType.bytes, followRedirects: true, headers: headers),
       );
 
       if (resp.statusCode != 200) {

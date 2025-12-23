@@ -126,7 +126,7 @@ class _AddBuildingViewState extends State<AddBuildingView> {
           req.fields['floor'] = floor.toString();
           req.fields['unit'] = unit.toString();
           if (_imageUrlCtrl.text.trim().isNotEmpty) {
-            req.fields['imageUrl'] = _imageUrlCtrl.text.trim();
+            req.fields['image_url'] = _imageUrlCtrl.text.trim();
           }
 
           req.files.add(http.MultipartFile.fromBytes(
@@ -188,7 +188,7 @@ class _AddBuildingViewState extends State<AddBuildingView> {
           req.fields['floor'] = floor.toString();
           req.fields['unit'] = unit.toString();
           if (_imageUrlCtrl.text.trim().isNotEmpty) {
-            req.fields['imageUrl'] = _imageUrlCtrl.text.trim();
+            req.fields['image_url'] = _imageUrlCtrl.text.trim();
           }
 
           req.files.add(http.MultipartFile.fromBytes(
