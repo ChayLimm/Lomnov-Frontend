@@ -76,6 +76,10 @@ class _PaymentDetailState extends State<PaymentDetail> {
   }
 
   Future<void> _accept() async {
+    // Dismiss keyboard / unfocus to avoid layout shifts that can cause overflow
+    try {
+      FocusScope.of(context).unfocus();
+    } catch (_) {}
     final result = {
       'water_meter': waterController.text,
       'electricity_meter': electricityController.text,
@@ -309,17 +313,20 @@ class _PaymentDetailState extends State<PaymentDetail> {
     final electricityImage = payload['electricity_image']?.toString();
 
     return Scaffold(
+      // Prevent automatic resize when keyboard appears to avoid pushing content
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: const Text('Payment Detail', style: TextStyle(color: Colors.black)),
         centerTitle: true,
         backgroundColor: Colors.white,
       ),
       backgroundColor: AppColors.surfaceColor,
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
               width: double.infinity,
@@ -797,13 +804,18 @@ class _PaymentDetailState extends State<PaymentDetail> {
                 ),
               ],
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   Future<void> _reject() async {
+    // Dismiss keyboard / unfocus to avoid layout shifts that can cause overflow
+    try {
+      FocusScope.of(context).unfocus();
+    } catch (_) {}
     if (widget.notificationId == null) {
       // nothing to do
       if (ModalRoute.of(context)?.isCurrent ?? false) Get.back();
