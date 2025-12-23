@@ -34,8 +34,10 @@ class _ReceiptsSectionState extends State<ReceiptsSection> {
   int _tabIndex = 0;
   int _pageIndex = 0;
   int? _landlordId;
+  int? _lastPage;
   final Map<int, String> _tenantNames = {};
   final Map<int, String> _roomNames = {};
+  bool _namesResolved = false;
   // initialize with a safe default so the FutureBuilder can read a Future
   late Future<PaginatedResult<Payment>> _paymentsFuture =
       PaymentsService().fetchLandlordPayments(1, page: 1, status: null);
@@ -48,12 +50,35 @@ class _ReceiptsSectionState extends State<ReceiptsSection> {
 
   Future<void> _loadLandlordAndPayments() async {
     final id = await AuthService().getLandlordId();
-    setState(() {
-      _landlordId = id;
-      // fallback to 1 if landlord id is missing (keeps previous dev behavior)
-      final lid = _landlordId ?? 1;
-      _paymentsFuture = PaymentsService().fetchLandlordPayments(lid, page: _pageIndex + 1, status: null);
-    });
+    final lid = id ?? 1;
+    try {
+      // first fetch page 1 to learn total pages, then fetch the last page
+      final first = await PaymentsService().fetchLandlordPayments(lid, page: 1, status: null);
+      final last = first.pagination.lastPage ?? 1;
+      setState(() {
+        _landlordId = id;
+        _lastPage = last;
+        _namesResolved = false;
+        // fetch the last page so UI shows newest payments first
+        _paymentsFuture = PaymentsService().fetchLandlordPayments(lid, page: last, status: null);
+      });
+    } catch (_) {
+      setState(() {
+        _landlordId = id;
+        _namesResolved = false;
+        _paymentsFuture = PaymentsService().fetchLandlordPayments(lid, page: _pageIndex + 1, status: null);
+      });
+    }
+  }
+
+  /// Fetch payments mapping the UI page index (0 = newest page) to the
+  /// server page number. If [_lastPage] is known, map: serverPage = _lastPage - uiIndex
+  Future<PaginatedResult<Payment>> _fetchPaymentsForUiPage(int uiIndex, {String? status}) async {
+    final lid = _landlordId ?? 1;
+    final serverPage = (_lastPage != null) ? (_lastPage! - uiIndex) : (uiIndex + 1);
+    final resp = await PaymentsService().fetchLandlordPayments(lid, page: serverPage, status: status);
+    _lastPage = resp.pagination.lastPage ?? _lastPage;
+    return resp;
   }
 
   Future<void> _resolveNames(List<Payment> payments) async {
@@ -76,13 +101,16 @@ class _ReceiptsSectionState extends State<ReceiptsSection> {
       }
 
       if (missingRoomIds.isNotEmpty) {
-        for (final rid in missingRoomIds) {
-          try {
-            final room = await RoomFetchService().fetchRoomById(rid);
-            if (room.roomNumber.isNotEmpty) _roomNames[rid] = room.roomNumber;
-          } catch (_) {
-            // ignore fetch errors per-room
+        try {
+          // Fetch rooms in bulk to avoid N requests for N missing room ids.
+          final roomsResp = await RoomFetchService().fetchRooms(page: 1, perPage: 1000);
+          for (final r in roomsResp.items) {
+            if (missingRoomIds.contains(r.id) && r.roomNumber.isNotEmpty) {
+              _roomNames[r.id] = r.roomNumber;
+            }
           }
+        } catch (_) {
+          // ignore fetch errors
         }
       }
 
@@ -122,8 +150,8 @@ class _ReceiptsSectionState extends State<ReceiptsSection> {
                 onTap: () => setState(() {
                   _tabIndex = 0;
                   _pageIndex = 0;
-                  final lid = _landlordId ?? 1;
-                  _paymentsFuture = PaymentsService().fetchLandlordPayments(lid, page: _pageIndex + 1, status: null);
+                    _namesResolved = false;
+                    _paymentsFuture = _fetchPaymentsForUiPage(_pageIndex, status: null);
                 }),
               ),
               const SizedBox(width: 8),
@@ -133,8 +161,8 @@ class _ReceiptsSectionState extends State<ReceiptsSection> {
                 onTap: () => setState(() {
                   _tabIndex = 1;
                   _pageIndex = 0;
-                  final lid = _landlordId ?? 1;
-                  _paymentsFuture = PaymentsService().fetchLandlordPayments(lid, page: _pageIndex + 1, status: 'pending');
+                    _namesResolved = false;
+                    _paymentsFuture = _fetchPaymentsForUiPage(_pageIndex, status: 'pending');
                 }),
               ),
               const SizedBox(width: 8),
@@ -144,9 +172,9 @@ class _ReceiptsSectionState extends State<ReceiptsSection> {
                 onTap: () => setState(() {
                   _tabIndex = 2;
                   _pageIndex = 0;
-                  final lid = _landlordId ?? 1;
-                  // treat 'paid', 'complete' and 'completed' as paid
-                  _paymentsFuture = PaymentsService().fetchLandlordPayments(lid, page: _pageIndex + 1, status: 'paid,complete,completed');
+                    _namesResolved = false;
+                    // treat 'paid', 'complete' and 'completed' as paid
+                    _paymentsFuture = _fetchPaymentsForUiPage(_pageIndex, status: 'paid,complete,completed');
                 }),
               ),
             ],
@@ -163,9 +191,15 @@ class _ReceiptsSectionState extends State<ReceiptsSection> {
                 return Text('Error loading receipts: ${err.toString()}');
               }
               final paged = snapshot.data;
-              final payments = paged?.items ?? <Payment>[];
+              // show latest payments first (reverse the returned page items)
+              final payments = (paged?.items ?? <Payment>[]).reversed.toList();
               if (payments.isEmpty) {
                 return const Text('No receipts available');
+              }
+              // Resolve missing tenant/room names once for this payments page
+              if (!_namesResolved) {
+                _namesResolved = true;
+                _resolveNames(payments);
               }
               return ListView.separated(
                 shrinkWrap: true,
@@ -178,8 +212,6 @@ class _ReceiptsSectionState extends State<ReceiptsSection> {
                       : (payment.tenantName != null && payment.tenantName!.isNotEmpty)
                           ? payment.tenantName
                           : _roomNames[payment.roomId] ?? _tenantNames[payment.tenantId];
-                  // Attempt to resolve missing names in background
-                  _resolveNames(payments);
                   return _ReceiptItem.fromPayment(payments[index], displayName: display);
                 },
                 separatorBuilder: (context, index) => const SizedBox(height: kReceiptSeparatorHeight),
@@ -198,9 +230,9 @@ class _ReceiptsSectionState extends State<ReceiptsSection> {
                   _pageIndex = i;
                   // preserve current tab filter when changing page
                   // include 'complete' and 'completed' alongside 'paid' when showing paid page
-                  final status = _tabIndex == 1 ? 'pending' : _tabIndex == 2 ? 'paid,complete,completed' : null;
-                  final lid = _landlordId ?? 1;
-                  _paymentsFuture = PaymentsService().fetchLandlordPayments(lid, page: _pageIndex + 1, status: status);
+                      final status = _tabIndex == 1 ? 'pending' : _tabIndex == 2 ? 'paid,complete,completed' : null;
+                      _namesResolved = false;
+                      _paymentsFuture = _fetchPaymentsForUiPage(_pageIndex, status: status);
                 }),
               );
             },
@@ -274,14 +306,7 @@ class _ReceiptItem extends StatelessWidget {
     } else {
       roomText = 'Room';
     }
-    // compute total
-    double total = 0.0;
-    if (p != null) {
-      for (final it in p.items) {
-        total += double.tryParse(it.subtotal) ?? 0.0;
-      }
-    }
-    final totalText = '\$ ${total.toStringAsFixed(2)}';
+    // Amount removed — backend does not provide reliable totals. Only show status badge.
 
     // Determine whether this payment should be shown as paid/green.
     final statusRaw = p?.status ?? 'pending';
@@ -341,25 +366,19 @@ class _ReceiptItem extends StatelessWidget {
               ],
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                totalText,
-                style: TextStyle(fontWeight: FontWeight.bold),
+          Container(
+            alignment: Alignment.centerRight,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: badgeBg,
+                borderRadius: BorderRadius.circular(4),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: badgeBg,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  badgeText,
-                  style: TextStyle(color: badgeTextColor, fontSize: 10),
-                ),
+              child: Text(
+                badgeText,
+                style: TextStyle(color: badgeTextColor, fontSize: 12),
               ),
-            ],
+            ),
           ),
         ],
       ),

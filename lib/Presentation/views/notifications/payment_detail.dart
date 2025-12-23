@@ -1,13 +1,15 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:app/Presentation/provider/payment_viewmode/payment_viewmodel.dart';
-import 'package:app/Presentation/views/payment/payment_view.dart';
 import 'package:app/domain/models/building_model/building_model.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:app/Presentation/themes/text_styles.dart';
+import 'package:app/Presentation/widgets/gradient_button.dart';
 import 'dart:convert';
 import 'package:app/data/services/notifications/notification_service.dart';
 
@@ -15,7 +17,7 @@ class PaymentDetail extends StatefulWidget {
   final Map<String, dynamic>? payload;
   final int? notificationId;
 
-  const PaymentDetail({Key? key, this.payload, this.notificationId}) : super(key: key);
+  const PaymentDetail({super.key, this.payload, this.notificationId});
 
   @override
   _PaymentDetailState createState() => _PaymentDetailState();
@@ -53,6 +55,15 @@ class _PaymentDetailState extends State<PaymentDetail> {
     rname = rname ?? p['room_number']?.toString() ?? p['room_name']?.toString();
     buildingController = TextEditingController(text: bname ?? '');
     roomController = TextEditingController(text: rname ?? '');
+    // Ensure viewmodel has settings/buildings loaded so totals can be calculated
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        final provider = context.read<PaymentViewModel>();
+        if (provider.buildings.isEmpty) {
+          await provider.loadData();
+        }
+      } catch (_) {}
+    });
   }
 
   @override
@@ -141,6 +152,10 @@ class _PaymentDetailState extends State<PaymentDetail> {
 
       if (room != null) {
         provider.selectRoom(room);
+        // ensure room services and consumptions are loaded (loadRoomService returns a Future)
+        try {
+          await provider.loadRoomService();
+        } catch (_) {}
         // ensure consumptions loaded
         await provider.loadConumption();
       }
@@ -155,73 +170,127 @@ class _PaymentDetailState extends State<PaymentDetail> {
       provider.setWater(w);
       provider.setElectricity(e);
 
-      // Close this detail and then navigate to PaymentView so user can continue
-      // Process payment immediately and open receipt if available
-      try {
-        final response = await provider.processPayment();
-        // Try common shapes for receipt URL
-        String? receipt;
-        if (response['receipt_url'] != null) receipt = response['receipt_url']?.toString();
-        if (receipt == null && response['data'] is Map && response['data']['receipt_url'] != null) {
-          receipt = response['data']['receipt_url']?.toString();
-        }
-        if (receipt == null && response['original'] is Map) {
-          final orig = response['original'] as Map<String, dynamic>;
-          if (orig['payment'] is Map && orig['payment']['receipt_url'] != null) {
-            receipt = orig['payment']['receipt_url']?.toString();
-          }
-        }
-        if (receipt != null) {
-          provider.setReceipt(receipt);
-        }
+      // Instead of processing the payment locally (which requires a selected room
+      // and caused server errors when room was null), only update the notification
+      // payload on the server, call approve-payment, then mark as read.
+      if (widget.notificationId != null) {
+        final ns = NotificationService();
 
-        // Call notification approve-payment and update endpoints concurrently if notificationId present
-        if (widget.notificationId != null) {
-          final ns = NotificationService();
-          final approvePayload = <String, dynamic>{};
-          void addIf(String key, dynamic value) {
-            if (value == null) return;
-            if (value is String && value.trim().isEmpty) return;
-            approvePayload[key] = value;
-          }
-
-          addIf('landlord_id', provider.landlord_id);
-          addIf('chat_id', widget.payload?['chat_id']);
-          addIf('water_meter', waterController.text);
-          addIf('water_accuracy', widget.payload?['water_accuracy']);
-          addIf('electricity_meter', electricityController.text);
-          addIf('electricity_accuracy', widget.payload?['electricity_accuracy']);
-          addIf('water_image', provider.waterImage ?? widget.payload?['water_image']);
-          addIf('electricity_image', provider.electricityImage ?? widget.payload?['electricity_image']);
-          addIf('room_id', roomId ?? provider.selectedRoom?.id ?? widget.payload?['room_id']);
-          addIf('room_number', roomController.text);
-          addIf('building_id', buildingId ?? provider.selectedBuilding?.id ?? widget.payload?['building_id']);
-
-          // Log payload for debugging server errors
+        // Build a merged payload: start with existing notification payload
+        final merged = <String, dynamic>{};
+        if (widget.payload != null) {
           try {
-            print('approvePayload: ${jsonEncode(approvePayload)}');
+            merged.addAll(Map<String, dynamic>.from(widget.payload!));
           } catch (_) {}
-
-          final futures = <Future>[];
-          futures.add(ns.approvePayment(notificationId: widget.notificationId!, payload: approvePayload).catchError((e) {
-            // log but don't throw
-            print('approvePayment failed: $e');
-          }));
-          // Use markAsRead to avoid accidentally replacing notification fields
-          futures.add(ns.markAsRead(widget.notificationId!).catchError((e) {
-            print('mark-as-read failed: $e');
-          }));
-
-          await Future.wait(futures);
         }
 
-        Get.back(result: result);
-        Get.to(() => const PaymentView());
-      } catch (e) {
-        // If payment processing fails, still close and return result
-        Get.back(result: result);
-        Get.to(() => const PaymentView());
+        // Overwrite with values from the form / provider
+        merged['water_meter'] = waterController.text;
+        if (widget.payload?['water_accuracy'] != null) merged['water_accuracy'] = widget.payload?['water_accuracy'];
+        merged['electricity_meter'] = electricityController.text;
+        if (widget.payload?['electricity_accuracy'] != null) merged['electricity_accuracy'] = widget.payload?['electricity_accuracy'];
+        merged['water_image'] = provider.waterImage ?? widget.payload?['water_image'];
+        merged['electricity_image'] = provider.electricityImage ?? widget.payload?['electricity_image'];
+
+                // Derive room/building ids from multiple sources safely
+        final dynamic _bObj = widget.payload?['building'];
+        final dynamic _rObj = widget.payload?['room'];
+        final payloadBuildingId = _bObj is Map ? (_bObj['id'] ?? _bObj['building_id']) : widget.payload?['building_id'];
+        final payloadRoomId = _rObj is Map ? (_rObj['id'] ?? _rObj['room_id']) : widget.payload?['room_id'];
+
+        merged['room_number'] = roomController.text;
+        // prefer explicit buildingId, then provider selection, then payload variants
+        merged['building_id'] = buildingId ?? provider.selectedBuilding?.id ?? payloadBuildingId;
+        // prefer explicit roomId, then provider selection, then payload variants
+        if (roomId != null) {
+          merged['room_id'] = roomId;
+        } else if (provider.selectedRoom?.id != null) {
+          merged['room_id'] = provider.selectedRoom!.id;
+        } else if (payloadRoomId != null) {
+          merged['room_id'] = payloadRoomId;
+        }
+        merged['building'] = buildingController.text;
+        merged['landlord_id'] = provider.landlord_id ?? merged['landlord_id'];
+        merged['chat_id'] = widget.payload?['chat_id'] ?? merged['chat_id'];
+
+        // Debug log merged payload
+        try {
+          print('merged notification payload: ${jsonEncode(merged)}');
+        } catch (_) {}
+
+        // If room id is missing, abort approve to avoid backend errors
+        if (merged['room_id'] == null) {
+          Get.back(result: {'error': 'Missing room information'});
+          // Show a user-facing message
+          if (ModalRoute.of(context)?.isCurrent ?? false) {
+            Get.snackbar('Error', 'Cannot approve: missing room information', snackPosition: SnackPosition.BOTTOM);
+          }
+          return;
+        }
+
+        // include nested room/building objects to match backend expectations
+        if (merged['room_id'] != null) {
+          merged['room'] = {
+            'id': merged['room_id'],
+            'room_number': merged['room_number'] ?? roomController.text,
+          };
+        }
+        if (merged['building_id'] != null) {
+          merged['building'] = {
+            'id': merged['building_id'],
+            'name': buildingController.text,
+          };
+        }
+
+        // First: send the normal update (PUT) to the notifications resource
+        try {
+          await ns.putPayload(notificationId: widget.notificationId!, payload: merged).catchError((e) {
+            print('putPayload failed: $e');
+          });
+        } catch (e) {
+          print('Error while putting notification payload: $e');
+        }
+
+        // Build approve payload (only include necessary fields)
+        final approvePayload = <String, dynamic>{};
+        void addIf(String key, dynamic value) {
+          if (value == null) return;
+          if (value is String && value.trim().isEmpty) return;
+          approvePayload[key] = value;
+        }
+
+        addIf('landlord_id', provider.landlord_id);
+        addIf('chat_id', widget.payload?['chat_id']);
+        addIf('water_meter', waterController.text);
+        addIf('water_accuracy', widget.payload?['water_accuracy']);
+        addIf('electricity_meter', electricityController.text);
+        addIf('electricity_accuracy', widget.payload?['electricity_accuracy']);
+        addIf('water_image', provider.waterImage ?? widget.payload?['water_image']);
+        addIf('electricity_image', provider.electricityImage ?? widget.payload?['electricity_image']);
+        addIf('room_id', merged['room_id']);
+        addIf('room_number', roomController.text);
+        addIf('building_id', merged['building_id']);
+
+        // Second: call approve-payment (must be after updating the notification)
+        try {
+          await ns.approvePayment(notificationId: widget.notificationId!, payload: approvePayload).catchError((e) {
+            print('approvePayment failed: $e');
+          });
+        } catch (e) {
+          print('Error while approving payment: $e');
+        }
+
+        // Finally mark notification as read
+        try {
+          await ns.markAsRead(widget.notificationId!).catchError((e) {
+            print('mark-as-read failed: $e');
+          });
+        } catch (e) {
+          print('Error while marking as read: $e');
+        }
       }
+
+      Get.back(result: result);
     } catch (_) {
       // ignore and just return result
     }
@@ -527,6 +596,13 @@ class _PaymentDetailState extends State<PaymentDetail> {
                               TextFormField(
                                 controller: waterController,
                                 keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                onChanged: (v) {
+                                  try {
+                                    final vm = context.read<PaymentViewModel>();
+                                    final val = double.tryParse(v) ?? 0;
+                                    vm.setWater(val);
+                                  } catch (_) {}
+                                },
                                 decoration: InputDecoration(
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(10.0),
@@ -569,6 +645,13 @@ class _PaymentDetailState extends State<PaymentDetail> {
                               TextFormField(
                                 controller: electricityController,
                                 keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                onChanged: (v) {
+                                  try {
+                                    final vm = context.read<PaymentViewModel>();
+                                    final val = double.tryParse(v) ?? 0;
+                                    vm.setElectricity(val);
+                                  } catch (_) {}
+                                },
                                 decoration: InputDecoration(
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(10.0),
@@ -597,25 +680,177 @@ class _PaymentDetailState extends State<PaymentDetail> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 12),
+                    // Live summary of calculated quantities and totals
+                    Builder(
+                      builder: (ctx) {
+                        final vm = context.watch<PaymentViewModel>();
+                        final roomPrice = (vm.selectedRoom?.price ?? 0);
+                        final servicesTotal = vm.roomServices.fold<double>(0.0, (s, it) => s + (it.unitPrice ?? 0));
+                        final grandTotal = (vm.water_total) + (vm.electricity_total) + roomPrice + servicesTotal;
+                        return Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColors.dividerColor),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Payment summary', style: LomTextStyles.captionText().copyWith(fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 8),
+                              if (!vm.isLastPayment && vm.selectedRoom != null) ...[
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text('Room price'),
+                                    Text(roomPrice.toStringAsFixed(2)),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                              ],
+                              if (vm.roomServices.isNotEmpty) ...[
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text('Services total'),
+                                    Text(servicesTotal.toStringAsFixed(2)),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                              ],
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Water qty'),
+                                  Text(vm.water_qty.toStringAsFixed(2)),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Water total'),
+                                  Text(vm.water_total.toStringAsFixed(2)),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Electricity qty'),
+                                  Text(vm.electricity_qty.toStringAsFixed(2)),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Electricity total'),
+                                  Text(vm.electricity_total.toStringAsFixed(2)),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Divider(color: AppColors.dividerColor),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('Grand total', style: LomTextStyles.captionText().copyWith(color: AppColors.primaryColor, fontWeight: FontWeight.bold)),
+                                  Text(grandTotal.toStringAsFixed(2), style: LomTextStyles.captionText().copyWith(color: AppColors.primaryColor, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState?.validate() ?? false) {
-                    _accept();
-                  }
-                },
-                child: const Text('Accept'),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: GradientButton(
+                    label: 'Reject',
+                    onPressed: () async {
+                      if (_formKey.currentState?.validate() ?? false) {
+                        await _reject();
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GradientButton(
+                    label: 'Approve',
+                    onPressed: () async {
+                      if (_formKey.currentState?.validate() ?? false) {
+                        await _accept();
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _reject() async {
+    if (widget.notificationId == null) {
+      // nothing to do
+      if (ModalRoute.of(context)?.isCurrent ?? false) Get.back();
+      return;
+    }
+
+    final provider = context.read<PaymentViewModel>();
+
+    // Try to load provider data similar to approve flow so we can include useful fields
+    try {
+      if (provider.buildings.isEmpty) await provider.loadData();
+    } catch (_) {}
+
+    // Build payload similarly to approve
+    final payload = <String, dynamic>{};
+    void addIf(String key, dynamic value) {
+      if (value == null) return;
+      if (value is String && value.trim().isEmpty) return;
+      payload[key] = value;
+    }
+
+    addIf('landlord_id', provider.landlord_id);
+    addIf('chat_id', widget.payload?['chat_id']);
+    addIf('water_meter', waterController.text);
+    addIf('water_accuracy', widget.payload?['water_accuracy']);
+    addIf('electricity_meter', electricityController.text);
+    addIf('electricity_accuracy', widget.payload?['electricity_accuracy']);
+    addIf('water_image', provider.waterImage ?? widget.payload?['water_image']);
+    addIf('electricity_image', provider.electricityImage ?? widget.payload?['electricity_image']);
+    addIf('room_id', roomId ?? provider.selectedRoom?.id ?? widget.payload?['room_id']);
+    addIf('room_number', roomController.text);
+    addIf('building_id', buildingId ?? provider.selectedBuilding?.id ?? widget.payload?['building_id']);
+
+    final ns = NotificationService();
+    try {
+      await ns.rejectPayment(notificationId: widget.notificationId!, payload: payload).catchError((e) {
+        print('rejectPayment failed: $e');
+      });
+      await ns.markAsRead(widget.notificationId!).catchError((e) {
+        print('mark-as-read failed after reject: $e');
+      });
+    } catch (e) {
+      print('Reject flow error: $e');
+    }
+
+    if (ModalRoute.of(context)?.isCurrent ?? false) {
+      Get.back(result: {'rejected': true});
+    }
   }
 }

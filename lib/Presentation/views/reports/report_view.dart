@@ -9,6 +9,7 @@ import 'package:app/data/services/reports_service.dart';
 
 import 'package:provider/provider.dart';
 import 'package:app/Presentation/provider/auth_viewmodel.dart';
+import 'package:app/data/services/auth_service/auth_service.dart';
 
 class ReportView extends StatefulWidget {
   const ReportView({super.key});
@@ -28,14 +29,13 @@ class _ReportViewState extends State<ReportView> {
   @override
   void initState() {
     super.initState();
-    // Fetch landlordId after first frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final auth = context.read<AuthViewModel>();
+    // Fetch landlordId after first frame using persisted AuthService value
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final id = await AuthService().getLandlordId();
       setState(() {
-        // If auth user is not available (dev/demo), fall back to landlord id 1
-        _landlordId = auth.user?.id ?? 1;
+        _landlordId = id; // keep null if not found so UI can surface error
       });
-      _fetch();
+      await _fetch();
     });
   }
 

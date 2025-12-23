@@ -251,6 +251,31 @@ class NotificationService extends ApiBase {
     throw Exception('Unexpected response format');
   }
 
+  // PATCH /api/notifications/{id}/reject-payment
+  Future<Map<String, dynamic>> rejectPayment({
+    required int notificationId,
+    Map<String, dynamic>? payload,
+  }) async {
+    final uri = buildUri(Endpoints.notificationRejectPayment(notificationId));
+    final headers = await buildHeaders();
+
+    dev.log('[HTTP] PATCH $uri body=${jsonEncode(payload)}');
+    final response = await HttpErrorHandler.executeRequest(
+      () => httpClient.patch(uri, headers: headers, body: payload == null ? null : jsonEncode(payload)),
+    );
+
+    final decoded = HttpErrorHandler.handleResponse(
+      response,
+      'Failed to reject payment',
+    );
+
+    if (decoded is Map<String, dynamic>) {
+      return decoded;
+    }
+
+    throw Exception('Unexpected response format');
+  }
+
   // PATCH /api/notifications/{id}/reject-registration
   Future<NotificationDto> rejectRegistration({
     required int notificationId,
@@ -298,9 +323,11 @@ class NotificationService extends ApiBase {
     addIfNonNull('is_read', isRead);
     addIfNonNull('type', type);
 
-    dev.log('[HTTP] PUT $uri body=${jsonEncode(payload)}');
+    // Wrap the supplied map under `payload` to update the notification's payload column
+    final body = jsonEncode({'payload': payload});
+    dev.log('[HTTP] PUT $uri body=$body');
     final response = await HttpErrorHandler.executeRequest(
-      () => httpClient.put(uri, headers: headers, body: jsonEncode(payload)),
+      () => httpClient.put(uri, headers: headers, body: body),
     );
 
     final decoded = HttpErrorHandler.handleResponse(
@@ -314,6 +341,64 @@ class NotificationService extends ApiBase {
       }
       return NotificationDto.fromJson(decoded);
     }
+    throw Exception('Unexpected response format');
+  }
+
+  // PATCH /api/notifications/{id}
+  Future<NotificationDto> patchPayload({
+    required int notificationId,
+    required Map<String, dynamic> payload,
+  }) async {
+    final uri = buildUri(Endpoints.notificationById(notificationId));
+    final headers = await buildHeaders();
+
+    dev.log('[HTTP] PATCH $uri body=${jsonEncode(payload)}');
+    final response = await HttpErrorHandler.executeRequest(
+      () => httpClient.patch(uri, headers: headers, body: jsonEncode(payload)),
+    );
+
+    final decoded = HttpErrorHandler.handleResponse(
+      response,
+      'Failed to update notification payload',
+    );
+
+    if (decoded is Map<String, dynamic>) {
+      if (decoded['data'] is Map<String, dynamic>) {
+        return NotificationDto.fromJson(decoded['data'] as Map<String, dynamic>);
+      }
+      return NotificationDto.fromJson(decoded);
+    }
+
+    throw Exception('Unexpected response format');
+  }
+
+  // PUT /api/notifications/{id} -- update the notification resource with an arbitrary payload
+  Future<Map<String, dynamic>> putPayload({
+    required int notificationId,
+    required Map<String, dynamic> payload,
+  }) async {
+    final uri = buildUri(Endpoints.notificationById(notificationId));
+    final headers = await buildHeaders();
+
+    // When updating the notification resource we must wrap the supplied map
+    // under the `payload` key so the backend stores it in the notification's
+    // payload column. Avoid sending the bare map which some servers treat as
+    // an unrelated document and may null the stored payload.
+    final body = jsonEncode({'payload': payload});
+    dev.log('[HTTP] PUT $uri body=$body');
+    final response = await HttpErrorHandler.executeRequest(
+      () => httpClient.put(uri, headers: headers, body: body),
+    );
+
+    final decoded = HttpErrorHandler.handleResponse(
+      response,
+      'Failed to update notification via PUT',
+    );
+
+    if (decoded is Map<String, dynamic>) {
+      return decoded;
+    }
+
     throw Exception('Unexpected response format');
   }
 

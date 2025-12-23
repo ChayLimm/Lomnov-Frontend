@@ -55,6 +55,7 @@ class Endpoints {
   static String notificationApproveRegistration(int id) => '/api/notifications/$id/approve-registration';
   static String notificationRejectRegistration(int id) => '/api/notifications/$id/reject-registration';
   static String notificationApprovePayment(int id) => '/api/notifications/$id/approve-payment';
+  static String notificationRejectPayment(int id) => '/api/notifications/$id/reject-payment';
   static const String notificationsUnread = '/api/notifications/unread';
   static const String sendReminders = '/api/invoices/send-reminders';
 

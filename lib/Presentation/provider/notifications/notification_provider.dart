@@ -23,15 +23,22 @@ class NotificationState extends ChangeNotifier {
   List<AppNotification> get all => _all;
 
   List<AppNotification> get filtered {
+    List<AppNotification> list;
     switch (_tab) {
       case NotificationTab.payment:
-        return _all.where((n) => (n.type ?? '').toLowerCase() == 'payment').toList();
+        list = _all.where((n) => (n.type ?? '').toLowerCase() == 'payment').toList();
+        break;
       case NotificationTab.registration:
-        return _all
+        list = _all
             .where((n) => (n.type ?? '').toLowerCase() == 'registration')
             .where((n) => (n.status ?? '').toLowerCase() != 'rejected')
             .toList();
+        break;
     }
+
+    // Ensure newest notifications appear first
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
   }
 
   Future<void> load({bool unreadOnly = false}) async {

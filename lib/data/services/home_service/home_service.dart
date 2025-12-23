@@ -52,15 +52,18 @@ class HomeService {
           // ignore: avoid_print
           print('[Dashboard][Payment] id=${p.id} status=$st transaction=${p.transactionId} receipt=${p.receiptUrl} roomStatus=${p.roomStatus}');
 
-          if (st.contains('paid')) {
+          // Classify statuses carefully: check 'unpaid' before 'paid' because
+          // 'unpaid' contains the substring 'paid'. Treat 'complete'/'completed'
+          // as paid as well.
+          if (st.contains('unpaid')) {
+            counts[InvoiceStatus.unpaid] = (counts[InvoiceStatus.unpaid] ?? 0) + 1;
+          } else if (st.contains('paid') || st.contains('complete') || st.contains('completed')) {
             paidCount += 1;
             counts[InvoiceStatus.paid] = (counts[InvoiceStatus.paid] ?? 0) + 1;
           } else if (st.contains('pending')) {
             counts[InvoiceStatus.pending] = (counts[InvoiceStatus.pending] ?? 0) + 1;
           } else if (st.contains('delay') || st.contains('delayed') || st.contains('overdue')) {
             counts[InvoiceStatus.delay] = (counts[InvoiceStatus.delay] ?? 0) + 1;
-          } else if (st.contains('unpaid')) {
-            counts[InvoiceStatus.unpaid] = (counts[InvoiceStatus.unpaid] ?? 0) + 1;
           } else {
             // Any unknown/other values treated as unpaid
             counts[InvoiceStatus.unpaid] = (counts[InvoiceStatus.unpaid] ?? 0) + 1;

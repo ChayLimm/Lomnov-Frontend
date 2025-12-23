@@ -36,7 +36,7 @@ class QuickActionsGrid extends StatelessWidget {
             QuickActionCard(
               gradient: AppColors.primaryGradient,
               title: 'Payment',
-              value: 'make',
+              value: 'Make',
               icon: Icons.receipt_long,
               onTap:onTapProcessPayment
             ),
