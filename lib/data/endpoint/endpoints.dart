@@ -54,6 +54,7 @@ class Endpoints {
   static String notificationMarkRead(int id) => '/api/notifications/$id/read';
   static String notificationApproveRegistration(int id) => '/api/notifications/$id/approve-registration';
   static String notificationRejectRegistration(int id) => '/api/notifications/$id/reject-registration';
+  static String notificationApprovePayment(int id) => '/api/notifications/$id/approve-payment';
   static const String notificationsUnread = '/api/notifications/unread';
   static const String sendReminders = '/api/invoices/send-reminders';
 
@@ -72,7 +73,7 @@ class Endpoints {
 
   // Payments
   static String paymentsByLandlord(int landlordId) => '/api/payments/landlord/$landlordId';
-  static String proceedPayment = '/api/proccess-Payment';
+  static String proceedPayment = '/api/proccess-payment';
   // Roles
   static const String roles = '/api/roles';
   static String roleById(int id) => '/api/roles/$id';

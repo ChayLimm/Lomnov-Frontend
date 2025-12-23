@@ -213,7 +213,7 @@ class _ContractFormViewState extends State<ContractFormView> {
       backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.backgroundColor,
-        title: Text((widget.isEdit || _activeContractMap != null) ? 'Edit Contract' : 'Add Contract'),
+        title: Text((widget.isEdit || _activeContractMap != null) ? 'Edit Contract' : 'Add Contract', style: const TextStyle(color: Colors.black)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -253,9 +253,16 @@ class _ContractFormViewState extends State<ContractFormView> {
                     if (_tenantListVM!.tenants.isEmpty) {
                       return Text('No tenants found', style: TextStyle(color: Colors.red));
                     }
+                    // Deduplicate tenants by id to avoid repeated entries in the dropdown
+                    final uniqueTenantsMap = <int, TenantModel>{};
+                    for (final t in _tenantListVM!.tenants) {
+                      uniqueTenantsMap[t.id] = t;
+                    }
+                    final uniqueTenants = uniqueTenantsMap.values.toList();
+
                     return DropdownButtonFormField<TenantModel>(
                       initialValue: _selectedTenant,
-                      items: _tenantListVM!.tenants
+                      items: uniqueTenants
                           .map((t) => DropdownMenuItem<TenantModel>(
                                 value: t,
                                 child: Text(t.name),

@@ -41,7 +41,7 @@ class _PaymentViewState extends State<PaymentView> {
           return Scaffold(
             backgroundColor: AppColors.surfaceColor,
             appBar: AppBar(
-              title: const Text('Payment'),
+              title: const Text('Payment', style: TextStyle(color: Colors.black)),
               centerTitle: true,
               backgroundColor: Colors.white,
             ),

@@ -226,6 +226,31 @@ class NotificationService extends ApiBase {
     throw Exception('Unexpected response format');
   }
 
+  // PATCH /api/notifications/{id}/approve-payment
+  Future<Map<String, dynamic>> approvePayment({
+    required int notificationId,
+    required Map<String, dynamic> payload,
+  }) async {
+    final uri = buildUri(Endpoints.notificationApprovePayment(notificationId));
+    final headers = await buildHeaders();
+
+    dev.log('[HTTP] PATCH $uri body=${jsonEncode(payload)}');
+    final response = await HttpErrorHandler.executeRequest(
+      () => httpClient.patch(uri, headers: headers, body: jsonEncode(payload)),
+    );
+
+    final decoded = HttpErrorHandler.handleResponse(
+      response,
+      'Failed to approve payment',
+    );
+
+    if (decoded is Map<String, dynamic>) {
+      return decoded;
+    }
+
+    throw Exception('Unexpected response format');
+  }
+
   // PATCH /api/notifications/{id}/reject-registration
   Future<NotificationDto> rejectRegistration({
     required int notificationId,

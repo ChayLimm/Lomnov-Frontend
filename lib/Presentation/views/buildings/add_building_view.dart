@@ -268,7 +268,7 @@ class _AddBuildingViewState extends State<AddBuildingView> {
       backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.backgroundColor,
-        title: Text(widget.editingBuildingId != null ? 'Edit building' : 'Add new building'),
+        title: Text(widget.editingBuildingId != null ? 'Edit building' : 'Add new building', style: const TextStyle(color: Colors.black)),
       ),
       body: SafeArea(
         child: Form(

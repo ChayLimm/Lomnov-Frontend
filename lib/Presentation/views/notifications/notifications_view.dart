@@ -203,11 +203,14 @@ class _Body extends StatelessWidget {
         item: item,
         onTap: () {
           final t = (item.type ?? '').toLowerCase();
-          if (t == 'registration') {
+            if (t == 'registration') {
             Get.to(() => RegistrationDetail(notification: item));
           } else if (t == 'payment') {
             // Open payment detail with payload (editable) and mark notification as read
-            final result = Get.to(() => PaymentDetail(payload: item.payload ?? {}));
+            final result = Get.to(() => PaymentDetail(
+                  payload: item.payload ?? {},
+                  notificationId: item.id,
+                ));
             context.read<NotificationState>().markAsRead(item.id);
             // Optional: handle returned result if needed
             // result?.then((res) => print('Payment detail result: $res'));

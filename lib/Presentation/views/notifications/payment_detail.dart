@@ -8,11 +8,14 @@ import 'package:app/Presentation/views/payment/payment_view.dart';
 import 'package:app/domain/models/building_model/building_model.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:app/Presentation/themes/text_styles.dart';
+import 'dart:convert';
+import 'package:app/data/services/notifications/notification_service.dart';
 
 class PaymentDetail extends StatefulWidget {
   final Map<String, dynamic>? payload;
+  final int? notificationId;
 
-  const PaymentDetail({Key? key, this.payload}) : super(key: key);
+  const PaymentDetail({Key? key, this.payload, this.notificationId}) : super(key: key);
 
   @override
   _PaymentDetailState createState() => _PaymentDetailState();
@@ -40,8 +43,8 @@ class _PaymentDetailState extends State<PaymentDetail> {
     String? bname;
     String? rname;
     // building id fallback
-    buildingId = p['building_id'] ?? p['building'] is Map ? p['building']['id'] : null;
-    roomId = p['room_id'] ?? p['room'] is Map ? p['room']['id'] : null;
+    buildingId = p['building_id'] ?? (p['building'] is Map ? p['building']['id'] : null);
+    roomId = p['room_id'] ?? (p['room'] is Map ? p['room']['id'] : null);
     if (p['building'] is String) bname = p['building'];
     if (p['building'] is Map) bname = p['building']['name'] ?? p['building']['building_name']?.toString();
     bname = bname ?? p['building_name']?.toString();
@@ -78,6 +81,29 @@ class _PaymentDetailState extends State<PaymentDetail> {
       // Ensure buildings loaded
       if (provider.buildings.isEmpty) {
         await provider.loadData();
+      }
+
+      // If payload contains building_id, try to select that building (fetch if missing)
+      if (buildingId != null) {
+        BuildingModel? building;
+        try {
+          building = provider.buildings.firstWhere((b) => b.id == buildingId);
+        } catch (_) {
+          building = null;
+        }
+        if (building == null) {
+          try {
+            final dto = await provider.buildingService.fetchBuildingById(buildingId);
+            building = dto.toDomain();
+            // add to provider's buildings list if missing
+            provider.buildings.add(building!);
+            provider.selectBuilding(building);
+          } catch (_) {
+            // ignore fetch failures
+          }
+        } else {
+          provider.selectBuilding(building);
+        }
       }
 
       // Find building by id or name
@@ -130,8 +156,72 @@ class _PaymentDetailState extends State<PaymentDetail> {
       provider.setElectricity(e);
 
       // Close this detail and then navigate to PaymentView so user can continue
-      Get.back(result: result);
-      Get.to(() => const PaymentView());
+      // Process payment immediately and open receipt if available
+      try {
+        final response = await provider.processPayment();
+        // Try common shapes for receipt URL
+        String? receipt;
+        if (response['receipt_url'] != null) receipt = response['receipt_url']?.toString();
+        if (receipt == null && response['data'] is Map && response['data']['receipt_url'] != null) {
+          receipt = response['data']['receipt_url']?.toString();
+        }
+        if (receipt == null && response['original'] is Map) {
+          final orig = response['original'] as Map<String, dynamic>;
+          if (orig['payment'] is Map && orig['payment']['receipt_url'] != null) {
+            receipt = orig['payment']['receipt_url']?.toString();
+          }
+        }
+        if (receipt != null) {
+          provider.setReceipt(receipt);
+        }
+
+        // Call notification approve-payment and update endpoints concurrently if notificationId present
+        if (widget.notificationId != null) {
+          final ns = NotificationService();
+          final approvePayload = <String, dynamic>{};
+          void addIf(String key, dynamic value) {
+            if (value == null) return;
+            if (value is String && value.trim().isEmpty) return;
+            approvePayload[key] = value;
+          }
+
+          addIf('landlord_id', provider.landlord_id);
+          addIf('chat_id', widget.payload?['chat_id']);
+          addIf('water_meter', waterController.text);
+          addIf('water_accuracy', widget.payload?['water_accuracy']);
+          addIf('electricity_meter', electricityController.text);
+          addIf('electricity_accuracy', widget.payload?['electricity_accuracy']);
+          addIf('water_image', provider.waterImage ?? widget.payload?['water_image']);
+          addIf('electricity_image', provider.electricityImage ?? widget.payload?['electricity_image']);
+          addIf('room_id', roomId ?? provider.selectedRoom?.id ?? widget.payload?['room_id']);
+          addIf('room_number', roomController.text);
+          addIf('building_id', buildingId ?? provider.selectedBuilding?.id ?? widget.payload?['building_id']);
+
+          // Log payload for debugging server errors
+          try {
+            print('approvePayload: ${jsonEncode(approvePayload)}');
+          } catch (_) {}
+
+          final futures = <Future>[];
+          futures.add(ns.approvePayment(notificationId: widget.notificationId!, payload: approvePayload).catchError((e) {
+            // log but don't throw
+            print('approvePayment failed: $e');
+          }));
+          // Use markAsRead to avoid accidentally replacing notification fields
+          futures.add(ns.markAsRead(widget.notificationId!).catchError((e) {
+            print('mark-as-read failed: $e');
+          }));
+
+          await Future.wait(futures);
+        }
+
+        Get.back(result: result);
+        Get.to(() => const PaymentView());
+      } catch (e) {
+        // If payment processing fails, still close and return result
+        Get.back(result: result);
+        Get.to(() => const PaymentView());
+      }
     } catch (_) {
       // ignore and just return result
     }
