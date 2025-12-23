@@ -166,19 +166,13 @@ class _StatusesGrid extends StatelessWidget {
       InvoiceStatus.delay: 0,
     };
 
-    // For the screenshot/visual fix requested, swap paid/unpaid counts
-    // so the UI shows 1 paid instead of 1 unpaid when needed.
+    // Use counts from the summary as-is (no temporary swapping).
     final displayCounts = <InvoiceStatus, int>{
       InvoiceStatus.unpaid: counts[InvoiceStatus.unpaid] ?? 0,
       InvoiceStatus.pending: counts[InvoiceStatus.pending] ?? 0,
       InvoiceStatus.paid: counts[InvoiceStatus.paid] ?? 0,
       InvoiceStatus.delay: counts[InvoiceStatus.delay] ?? 0,
     };
-
-    // Swap unpaid and paid values unconditionally to reflect the requested flip.
-    final tempPaid = displayCounts[InvoiceStatus.paid] ?? 0;
-    displayCounts[InvoiceStatus.paid] = displayCounts[InvoiceStatus.unpaid] ?? 0;
-    displayCounts[InvoiceStatus.unpaid] = tempPaid;
 
     final regularItems = <StatusItem>[
       StatusItem(label: 'Unpaid', count: displayCounts[InvoiceStatus.unpaid] ?? 0, color: Colors.grey.shade600),
