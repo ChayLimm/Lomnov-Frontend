@@ -420,4 +420,21 @@ class NotificationService extends ApiBase {
     }
     throw Exception('Unexpected response format');
   }
+
+  // POST /api/notifications/landlord/{landlord_id}/payment-reminders
+  Future<void> sendPaymentRemindersToLandlord(int landlordId) async {
+    final uri = buildUri(Endpoints.notificationsPaymentReminders(landlordId));
+    final headers = await buildHeaders();
+
+    dev.log('[HTTP] POST $uri');
+    final response = await HttpErrorHandler.executeRequest(
+      () => httpClient.post(uri, headers: headers),
+    );
+
+    // Will throw on non-success statuses
+    HttpErrorHandler.handleResponse(
+      response,
+      'Failed to send payment reminders',
+    );
+  }
 }

@@ -50,6 +50,7 @@ class Endpoints {
   static String reportsByLandlord(int landlordId) => '/api/reports/$landlordId';
   static const String notifications = '/api/notifications';
   static String notificationsByLandlord(int landlordId) => '/api/notifications/landlord/$landlordId';
+  static String notificationsPaymentReminders(int landlordId) => '/api/notifications/landlord/$landlordId/payment-reminders';
   static String notificationById(int id) => '/api/notifications/$id';
   static String notificationMarkRead(int id) => '/api/notifications/$id/read';
   static String notificationApproveRegistration(int id) => '/api/notifications/$id/approve-registration';

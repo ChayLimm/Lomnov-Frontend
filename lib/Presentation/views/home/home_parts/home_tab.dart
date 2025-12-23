@@ -10,6 +10,7 @@ import 'package:app/domain/models/home_model/dashboard_summary.dart';
 import 'package:app/domain/models/home_model/invoice_status.dart';
 import 'package:app/data/services/home_service/home_service.dart';
 import 'package:app/data/services/auth_service/auth_service.dart';
+import 'package:app/data/services/notifications/new_notification_service.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 
@@ -149,15 +150,23 @@ class _Header extends StatelessWidget {
 }
 
 
-class _StatusesGrid extends StatelessWidget {
+class _StatusesGrid extends StatefulWidget {
   final DashboardSummary? summary;
   const _StatusesGrid({required this.summary});
+
+  @override
+  State<_StatusesGrid> createState() => _StatusesGridState();
+}
+
+class _StatusesGridState extends State<_StatusesGrid> {
+  bool _remindersSent = false;
+  bool _isSending = false;
 
   @override
   Widget build(BuildContext context) {
     // Use counts provided by the dashboard summary when available. Do not
     // perform any network calls here — keep counts static/local for now.
-    final counts = summary?.counts ?? const {
+    final counts = widget.summary?.counts ?? const {
       // Mock defaults for visual / screenshot-like preview.
       // Swapped so there's 1 paid by default as requested.
       InvoiceStatus.unpaid: 0,
@@ -185,20 +194,38 @@ class _StatusesGrid extends StatelessWidget {
       count: 0,
       color: AppColors.errorColor,
       spacing: 20,
-      primaryText: 'Send reminder to pending',
+      primaryText: _remindersSent ? 'Reminded unpaid' : 'Send reminder to pending',
       countStyle: const TextStyle(
         fontWeight: FontWeight.w700,
         fontSize: 12,
       ),
       trailing: OutlinedButton(
-        onPressed: () {},
+        onPressed: (_remindersSent || _isSending)
+            ? null
+            : () async {
+                final messenger = ScaffoldMessenger.of(context);
+                setState(() => _isSending = true);
+                try {
+                  final landlordId = await AuthService().getLandlordId();
+                  if (landlordId == null) throw Exception('No landlord id');
+                  await NotificationService().sendPaymentRemindersToLandlord(landlordId);
+                  setState(() {
+                    _remindersSent = true;
+                  });
+                  messenger.showSnackBar(const SnackBar(content: Text('Reminders sent for unpaid invoices')));
+                } catch (e) {
+                  messenger.showSnackBar(SnackBar(content: Text('Failed to send reminders: $e')));
+                } finally {
+                  setState(() => _isSending = false);
+                }
+              },
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primaryColor,
           side: BorderSide(color: AppColors.primaryColor.withValues(alpha: 0.5)),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
-        child: const Text('Send reminders'),
+        child: Text(_isSending ? 'Sending...' : (_remindersSent ? 'Sent' : 'Send reminders')),
       ),
     );
 
