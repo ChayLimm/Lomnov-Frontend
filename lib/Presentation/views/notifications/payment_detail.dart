@@ -348,26 +348,26 @@ class _PaymentDetailState extends State<PaymentDetail> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Text(
-                      "Payload",
-                      style: LomTextStyles.captionText().copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                    // Text(
+                    //   "Payload",
+                    //   style: LomTextStyles.captionText().copyWith(
+                    //     color: AppColors.textPrimary,
+                    //     fontWeight: FontWeight.w500,
+                    //   ),
+                    // ),
                     const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: SelectableText(
-                        JsonEncoder.withIndent('  ').convert(payload),
-                        style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
-                      ),
-                    ),
+                    // Container(
+                    //   width: double.infinity,
+                    //   padding: const EdgeInsets.all(12),
+                    //   decoration: BoxDecoration(
+                    //     color: Colors.grey[100],
+                    //     borderRadius: BorderRadius.circular(8),
+                    //   ),
+                    //   child: SelectableText(
+                    //     JsonEncoder.withIndent('  ').convert(payload),
+                    //     style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                    //   ),
+                    // ),
                     const SizedBox(height: 12),
                     // Row with both images (water and electricity)
                     Row(
@@ -393,13 +393,37 @@ class _PaymentDetailState extends State<PaymentDetail> {
                                 clipBehavior: Clip.hardEdge,
                                 child: waterImage != null
                                     ? GestureDetector(
-                                        onTap: () => Get.dialog(Center(
-                                          child: InteractiveViewer(
-                                            child: Image.network(waterImage, errorBuilder: (_, __, ___) => const SizedBox()),
+                                        onTap: () => Get.dialog(
+                                          Material(
+                                            color: Colors.black.withOpacity(0.9),
+                                            child: SafeArea(
+                                              child: Stack(
+                                                children: [
+                                                  Center(
+                                                    child: InteractiveViewer(
+                                                      child: Image.network(
+                                                        waterImage,
+                                                        headers: {'Accept': 'application/json', 'ngrok-skip-browser-warning': 'true'},
+                                                        errorBuilder: (_, __, ___) => const SizedBox(),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Positioned(
+                                                    top: 8,
+                                                    left: 8,
+                                                    child: IconButton(
+                                                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                                                      onPressed: () => Get.back(),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
                                           ),
-                                        )),
+                                        ),
                                         child: Image.network(
                                           waterImage,
+                                          headers: {'Accept': 'application/json', 'ngrok-skip-browser-warning': 'true'},
                                           fit: BoxFit.cover,
                                           width: double.infinity,
                                           height: 120,
@@ -437,13 +461,37 @@ class _PaymentDetailState extends State<PaymentDetail> {
                                 clipBehavior: Clip.hardEdge,
                                 child: electricityImage != null
                                     ? GestureDetector(
-                                        onTap: () => Get.dialog(Center(
-                                          child: InteractiveViewer(
-                                            child: Image.network(electricityImage, errorBuilder: (_, __, ___) => const SizedBox()),
+                                        onTap: () => Get.dialog(
+                                          Material(
+                                            color: Colors.black.withOpacity(0.9),
+                                            child: SafeArea(
+                                              child: Stack(
+                                                children: [
+                                                  Center(
+                                                    child: InteractiveViewer(
+                                                      child: Image.network(
+                                                        electricityImage,
+                                                        headers: {'Accept': 'application/json', 'ngrok-skip-browser-warning': 'true'},
+                                                        errorBuilder: (_, __, ___) => const SizedBox(),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Positioned(
+                                                    top: 8,
+                                                    left: 8,
+                                                    child: IconButton(
+                                                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                                                      onPressed: () => Get.back(),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
                                           ),
-                                        )),
+                                        ),
                                         child: Image.network(
                                           electricityImage,
+                                          headers: {'Accept': 'application/json', 'ngrok-skip-browser-warning': 'true'},
                                           fit: BoxFit.cover,
                                           width: double.infinity,
                                           height: 120,

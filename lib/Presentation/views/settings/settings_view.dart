@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:app/Presentation/provider/auth_viewmodel.dart';
 import 'package:app/Presentation/views/settings/services/service_view.dart';
+import 'package:app/Presentation/views/settings/bakong_view.dart';
+import 'package:app/data/services/auth_service/auth_service.dart';
 import 'package:app/Presentation/views/settings/room_type/room_type_view.dart';
 import 'package:app/Presentation/views/settings/contact/contact_us_view.dart';
 import 'package:app/Presentation/views/settings/meter_prices_view.dart';
@@ -52,7 +54,18 @@ class SettingsView extends StatelessWidget {
             title: 'System Settings',
             children: [
               _Tile(icon: Icons.lightbulb_outline, label: 'Services', onTap: () => Get.to(() => const ServiceView())),
-              const _Tile(icon: Icons.account_balance_wallet_outlined, label: 'Account Bakong'),
+              _Tile(
+                icon: Icons.account_balance_wallet_outlined,
+                label: 'Account Bakong',
+                onTap: () async {
+                  final id = await AuthService().getLandlordId();
+                  if (id != null) {
+                    Get.to(() => BakongView(userId: id));
+                  } else {
+                    Get.snackbar('Error', 'User ID not found', snackPosition: SnackPosition.BOTTOM);
+                  }
+                },
+              ),
               _Tile(icon: Icons.gas_meter_outlined, label: 'Meter Prices', onTap: () => Get.to(() => const MeterPricesView())),
               _Tile(icon: Icons.rule_rounded, label: 'Rules & Regulations', onTap: () => Get.to(() => const RulesRegulationsView())),
               _Tile(icon: Icons.room_service_outlined, label: 'Room Types', onTap: () => Get.to(() => const RoomTypeView())),
