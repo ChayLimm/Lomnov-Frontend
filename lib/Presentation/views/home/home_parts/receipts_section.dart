@@ -48,6 +48,22 @@ class _ReceiptsSectionState extends State<ReceiptsSection> {
     _loadLandlordAndPayments();
   }
 
+  Future<void> _onRefresh() async {
+    // Reset to newest page and re-fetch payments according to current filter
+    setState(() {
+      _pageIndex = 0;
+      _namesResolved = false;
+      final status = _tabIndex == 1 ? 'pending' : _tabIndex == 2 ? 'paid,complete,completed' : null;
+      _paymentsFuture = _fetchPaymentsForUiPage(_pageIndex, status: status);
+    });
+
+    try {
+      final paged = await _paymentsFuture;
+      final payments = (paged.items).reversed.toList();
+      await _resolveNames(payments);
+    } catch (_) {}
+  }
+
   Future<void> _loadLandlordAndPayments() async {
     final id = await AuthService().getLandlordId();
     final lid = id ?? 1;
@@ -134,9 +150,14 @@ class _ReceiptsSectionState extends State<ReceiptsSection> {
           topRight: Radius.circular(30),
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      // Allow pull-to-refresh: wrap content in RefreshIndicator + scroll view
+      child: RefreshIndicator(
+        onRefresh: _onRefresh,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           const Text(
             'Receipts',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
@@ -237,7 +258,9 @@ class _ReceiptsSectionState extends State<ReceiptsSection> {
               );
             },
           ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
