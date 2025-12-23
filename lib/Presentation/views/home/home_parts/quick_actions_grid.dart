@@ -1,6 +1,8 @@
 import 'package:app/Presentation/views/home/home_parts/quick_action_card.dart';
 import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:app/Presentation/views/payment/payment_view.dart';
+import 'package:app/Presentation/views/settings/services/service_view.dart';
+import 'package:app/Presentation/views/settings/room_type/room_type_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -9,6 +11,14 @@ class QuickActionsGrid extends StatelessWidget {
 
   void onTapProcessPayment(){
     Get.to(() => PaymentView());
+  }
+
+  void onTapServices(){
+    Get.to(() => const ServiceView());
+  }
+
+  void onTapRoomTypes(){
+    Get.to(() => const RoomTypeView());
   }
 
   @override
@@ -36,6 +46,7 @@ class QuickActionsGrid extends StatelessWidget {
               title: 'Services',
               value: 'Add',
               icon: Icons.person_add_alt_1,
+              onTap: onTapServices,
             ),
             const SizedBox(width: 12),
             QuickActionCard(
@@ -43,6 +54,7 @@ class QuickActionsGrid extends StatelessWidget {
               title: 'Room-Type',
               value: 'Add',
               icon: Icons.meeting_room,
+              onTap: onTapRoomTypes,
             ),
           ],
         ),

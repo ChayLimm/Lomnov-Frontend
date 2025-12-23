@@ -199,14 +199,15 @@ class _StatusesGrid extends StatelessWidget {
         ];
 
         final delayItem = StatusItem(
-          label: 'Delay',
-          count: counts[InvoiceStatus.delay] ?? 0,
+          label: '',
+          count: 0,
           color: AppColors.errorColor,
+          spacing: 20,
+          primaryText: 'Send reminder to pending',
           countStyle: const TextStyle(
             fontWeight: FontWeight.w700,
-            fontSize: 10,
+            fontSize: 12,
           ),
-          spacing: 20,
           trailing: OutlinedButton(
             onPressed: () {},
             style: OutlinedButton.styleFrom(

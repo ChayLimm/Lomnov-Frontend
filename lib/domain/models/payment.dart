@@ -33,6 +33,8 @@ class Payment {
   final int landlordId;
   final int? transactionId;
   final int? roomId;
+  final String? roomName;
+  final String? tenantName;
   final String? roomStatus;
   final String status;
   final String? qrCode;
@@ -46,6 +48,8 @@ class Payment {
     required this.landlordId,
     required this.transactionId,
     required this.roomId,
+    this.roomName,
+    this.tenantName,
     required this.status,
     required this.qrCode,
     required this.receiptUrl,
@@ -55,12 +59,38 @@ class Payment {
 
   factory Payment.fromJson(Map<String, dynamic> json) {
     final rawItems = json['payment_items'] as List<dynamic>? ?? <dynamic>[];
+    // Extract room name from possible shapes
+    String? _roomName;
+    if (json['room'] is String) {
+      _roomName = json['room'] as String;
+    } else if (json['room'] is Map<String, dynamic>) {
+      final roomMap = json['room'] as Map<String, dynamic>;
+      _roomName = (roomMap['room_number'] as String?) ?? (roomMap['name'] as String?);
+    }
+
+    // Extract tenant name from possible shapes
+    String? _tenantName;
+    if (json['tenant'] is String) {
+      _tenantName = json['tenant'] as String;
+    } else if (json['tenant'] is Map<String, dynamic>) {
+      final t = json['tenant'] as Map<String, dynamic>;
+      final f = t['first_name'] as String?;
+      final l = t['last_name'] as String?;
+      if ((f?.isNotEmpty ?? false) || (l?.isNotEmpty ?? false)) {
+        _tenantName = '${f ?? ''}${(f != null && f.isNotEmpty && (l != null && l.isNotEmpty)) ? ' ' : ''}${l ?? ''}'.trim();
+      } else {
+        _tenantName = (t['name'] as String?) ?? (t['full_name'] as String?);
+      }
+    }
+
     return Payment(
       id: json['id'] as int,
       tenantId: json['tenant_id'] as int,
       landlordId: json['landlord_id'] as int,
       transactionId: json['transaction_id'] != null ? (json['transaction_id'] as int) : null,
       roomId: json['room_id'] != null ? (json['room_id'] as int) : null,
+      roomName: _roomName,
+      tenantName: _tenantName,
       status: json['status'] as String? ?? '',
       roomStatus: (json['room'] is Map<String, dynamic>) ? (json['room']['status'] as String?) : null,
       qrCode: json['qr_code'] as String?,

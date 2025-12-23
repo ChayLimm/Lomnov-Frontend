@@ -2,6 +2,8 @@ import 'package:app/Presentation/themes/app_colors.dart';
 import 'package:app/Presentation/views/home/home_parts/receipt_shimmer.dart';
 import 'package:flutter/material.dart';
 import 'package:app/data/services/payments_service.dart';
+import 'package:app/data/services/tenant_service.dart';
+import 'package:app/data/services/rooms_service/fetch_service.dart';
 import 'package:app/data/services/auth_service/auth_service.dart';
 import 'package:app/domain/models/payment.dart';
 import 'package:app/data/dto/paginated_result.dart';
@@ -32,6 +34,8 @@ class _ReceiptsSectionState extends State<ReceiptsSection> {
   int _tabIndex = 0;
   int _pageIndex = 0;
   int? _landlordId;
+  final Map<int, String> _tenantNames = {};
+  final Map<int, String> _roomNames = {};
   // initialize with a safe default so the FutureBuilder can read a Future
   late Future<PaginatedResult<Payment>> _paymentsFuture =
       PaymentsService().fetchLandlordPayments(1, page: 1, status: null);
@@ -50,6 +54,42 @@ class _ReceiptsSectionState extends State<ReceiptsSection> {
       final lid = _landlordId ?? 1;
       _paymentsFuture = PaymentsService().fetchLandlordPayments(lid, page: _pageIndex + 1, status: null);
     });
+  }
+
+  Future<void> _resolveNames(List<Payment> payments) async {
+    if (_landlordId == null) return;
+    final missingTenantIds = <int>{};
+    final missingRoomIds = <int>{};
+    for (final p in payments) {
+      if (p.tenantId != null && !_tenantNames.containsKey(p.tenantId)) missingTenantIds.add(p.tenantId);
+      if (p.roomId != null && !_roomNames.containsKey(p.roomId)) missingRoomIds.add(p.roomId!);
+    }
+    if (missingTenantIds.isEmpty && missingRoomIds.isEmpty) return;
+
+    try {
+      if (missingTenantIds.isNotEmpty) {
+        final tenantPage = await TenantService().fetchTenants(_landlordId ?? 1, page: 1, perPage: 1000);
+        for (final t in tenantPage.items) {
+          final name = '${t.firstName ?? ''} ${t.lastName ?? ''}'.trim();
+          if (name.isNotEmpty) _tenantNames[t.id] = name;
+        }
+      }
+
+      if (missingRoomIds.isNotEmpty) {
+        for (final rid in missingRoomIds) {
+          try {
+            final room = await RoomFetchService().fetchRoomById(rid);
+            if (room.roomNumber.isNotEmpty) _roomNames[rid] = room.roomNumber;
+          } catch (_) {
+            // ignore fetch errors per-room
+          }
+        }
+      }
+
+      if (mounted) setState(() {});
+    } catch (_) {
+      // silently ignore resolution errors
+    }
   }
 
   @override
@@ -131,7 +171,17 @@ class _ReceiptsSectionState extends State<ReceiptsSection> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: payments.length,
-                itemBuilder: (context, index) => _ReceiptItem.fromPayment(payments[index]),
+                itemBuilder: (context, index) {
+                  final payment = payments[index];
+                  final display = (payment.roomName != null && payment.roomName!.isNotEmpty)
+                      ? payment.roomName
+                      : (payment.tenantName != null && payment.tenantName!.isNotEmpty)
+                          ? payment.tenantName
+                          : _roomNames[payment.roomId] ?? _tenantNames[payment.tenantId];
+                  // Attempt to resolve missing names in background
+                  _resolveNames(payments);
+                  return _ReceiptItem.fromPayment(payments[index], displayName: display);
+                },
                 separatorBuilder: (context, index) => const SizedBox(height: kReceiptSeparatorHeight),
               );
             },
@@ -201,16 +251,29 @@ class _FilterChip extends StatelessWidget {
 
 class _ReceiptItem extends StatelessWidget {
   final Payment? payment;
+  final String? displayName;
+  const _ReceiptItem({this.payment, this.displayName});
 
-  const _ReceiptItem({this.payment});
-
-  factory _ReceiptItem.fromPayment(Payment p) => _ReceiptItem(payment: p);
+  factory _ReceiptItem.fromPayment(Payment p, {String? displayName}) => _ReceiptItem(payment: p, displayName: displayName);
 
   @override
   Widget build(BuildContext context) {
     final p = payment;
     final title = p != null ? 'Invoice#${p.id}' : 'Invoice#143241234';
-    final roomText = p != null && p.roomId != null ? 'Room${p.roomId}' : 'RoomA002';
+    String roomText;
+    if (displayName != null && displayName!.isNotEmpty) {
+      roomText = displayName!;
+    } else if (p == null) {
+      roomText = 'Room';
+    } else if (p.roomName != null && p.roomName!.isNotEmpty) {
+      roomText = p.roomName!;
+    } else if (p.tenantName != null && p.tenantName!.isNotEmpty) {
+      roomText = p.tenantName!;
+    } else if (p.roomId != null) {
+      roomText = 'Room${p.roomId}';
+    } else {
+      roomText = 'Room';
+    }
     // compute total
     double total = 0.0;
     if (p != null) {

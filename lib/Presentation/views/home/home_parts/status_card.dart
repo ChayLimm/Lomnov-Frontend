@@ -5,6 +5,7 @@ class StatusItem {
   final String label;
   final int count;
   final Color color;
+  final String? primaryText;
   final double? spacing;
   final Color? backgroundColor;
   final TextStyle? countStyle;
@@ -19,6 +20,7 @@ class StatusItem {
     this.backgroundColor,
     this.countStyle,
     this.labelStyle,
+    this.primaryText,
     this.trailing,
   });
 }
@@ -55,27 +57,34 @@ class StatusCard extends StatelessWidget {
           ),
           SizedBox(width: item.spacing ?? 12),
           Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${item.count}',
-                  style: item.countStyle ?? const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                ),
-                // const SizedBox(height: 4),
-                Text(
-                  item.label,
-                  style: item.labelStyle ?? const TextStyle(fontSize: 10, color: AppColors.textSecondary),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                ),
-              ],
-            ),
+            child: item.primaryText != null
+                ? Text(
+                    item.primaryText!,
+                    style: item.countStyle ?? const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${item.count}',
+                        style: item.countStyle ?? const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: false,
+                      ),
+                      // const SizedBox(height: 4),
+                      Text(
+                        item.label,
+                        style: item.labelStyle ?? const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: false,
+                      ),
+                    ],
+                  ),
           ),
           if (item.trailing != null) ...[
             const SizedBox(width: 8),
